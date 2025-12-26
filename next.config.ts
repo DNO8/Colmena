@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' chrome-extension: moz-extension:;",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' chrome-extension: moz-extension: https:; connect-src 'self' https: wss: chrome-extension: moz-extension:;",
           },
           {
             key: "X-Content-Type-Options",
