@@ -142,11 +142,18 @@ export default function ProjectPage() {
       <img
         src={project.cover_image_url}
         alt={project.title}
+        onClick={() => {
+          setLightboxIndex(-1);
+          setLightboxOpen(true);
+        }}
         style={{
           width: "100%",
-          height: "300px",
-          objectFit: "cover",
+          height: "auto",
+          maxHeight: "400px",
+          objectFit: "contain",
           borderRadius: "8px",
+          cursor: "pointer",
+          backgroundColor: "#f5f5f5",
         }}
       />
 
@@ -386,9 +393,10 @@ export default function ProjectPage() {
                 style={{
                   width: "100%",
                   height: "200px",
-                  objectFit: "cover",
+                  objectFit: "contain",
                   borderRadius: "8px",
                   cursor: "pointer",
+                  backgroundColor: "#f5f5f5",
                 }}
               />
             ))}
@@ -567,8 +575,11 @@ export default function ProjectPage() {
       <Lightbox
         open={lightboxOpen}
         close={() => setLightboxOpen(false)}
-        index={lightboxIndex}
-        slides={galleryImages.map((img) => ({ src: img.url }))}
+        index={lightboxIndex === -1 ? 0 : lightboxIndex + 1}
+        slides={[
+          { src: project.cover_image_url },
+          ...galleryImages.map((img) => ({ src: img.url })),
+        ]}
       />
     </div>
   );

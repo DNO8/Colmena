@@ -242,6 +242,170 @@ veritas/
 4. **Confirma transacción** en Freighter
 5. **Donación registrada** on-chain y en base de datos
 
+---
+
+## 🏗️ Arquitectura Técnica
+
+### ⚠️ Sin Smart Contracts (MVP)
+
+**VERITAS NO utiliza smart contracts** en su versión actual. Las donaciones funcionan mediante **transacciones nativas de Stellar** (peer-to-peer).
+
+### Flujo de Donación Completo
+
+```
+┌─────────────────┐
+│  Usuario Donador │
+└────────┬────────┘
+         │ 1. Conecta Wallet (Freighter/Albedo)
+         ▼
+┌─────────────────────────┐
+│   Frontend (Next.js)    │
+│  - Crea transacción     │
+│  - Usuario firma con    │
+│    su wallet            │
+└────────┬────────────────┘
+         │ 2. Transacción firmada
+         ▼
+┌─────────────────────────┐
+│   Stellar Network       │
+│  - Ejecuta pago nativo  │
+│  - Peer-to-peer         │
+│  - Sin intermediarios   │
+└────────┬────────────────┘
+         │ 3. Tx Hash generado
+         ▼
+┌─────────────────────────┐
+│  Wallet del Proyecto    │
+│  - Recibe fondos        │
+│    directamente         │
+└─────────────────────────┘
+         │
+         │ 4. Backend verifica
+         ▼
+┌─────────────────────────┐
+│  Stellar Horizon API    │
+│  - Consulta tx por hash │
+│  - Verifica destino     │
+│  - Verifica monto       │
+└────────┬────────────────┘
+         │ 5. Si válida
+         ▼
+┌─────────────────────────┐
+│  Supabase (PostgreSQL)  │
+│  - Registra donación    │
+│  - Actualiza proyecto   │
+│  - Genera estadísticas  │
+└─────────────────────────┘
+```
+
+### Componentes Clave
+
+#### 1. **Stellar SDK (Cliente)**
+```typescript
+// src/lib/stellar/payment.ts
+// Crea transacción nativa de Stellar (NO smart contract)
+const transaction = new StellarSdk.TransactionBuilder(sourceAccount)
+  .addOperation(
+    StellarSdk.Operation.payment({
+      destination: projectWallet,
+      asset: StellarSdk.Asset.native(), // XLM
+      amount: "200",
+    })
+  )
+  .build();
+
+// Usuario firma con su wallet
+const signedXdr = await signTransaction(transaction.toXDR());
+
+// Envía a Stellar Network
+const result = await server.submitTransaction(signedTx);
+```
+
+#### 2. **Verificación de Pago (Backend)**
+```typescript
+// src/lib/stellar/client.ts
+async verifyPayment(txHash, destinationWallet, amount, asset) {
+  // 1. Consulta transacción en Stellar Horizon API
+  const tx = await server.transactions().transaction(txHash).call();
+  
+  // 2. Obtiene operaciones de la transacción
+  const operations = await tx.operations();
+  
+  // 3. Verifica que:
+  //    - Existe una operación de pago
+  //    - El destino es la wallet del proyecto
+  //    - El monto coincide (con tolerancia de punto flotante)
+  //    - El asset coincide (XLM/USDC)
+  
+  return { valid: true/false, error?: string };
+}
+```
+
+#### 3. **Registro en Base de Datos**
+```typescript
+// src/lib/services/donations.ts
+async createDonation(input) {
+  // 1. Verifica que la tx existe y es válida
+  const verification = await stellarClient.verifyPayment(...);
+  
+  if (!verification.valid) {
+    throw new Error("Payment verification failed");
+  }
+  
+  // 2. Guarda en Supabase
+  const donation = await supabase.from("donations").insert({
+    project_id: input.projectId,
+    donor_wallet: input.donorWallet,
+    amount: input.amount,
+    asset: input.asset,
+    tx_hash: input.txHash,
+    network: input.network,
+  });
+  
+  // 3. Actualiza total del proyecto
+  await incrementProjectAmount(projectId, amount);
+  
+  return donation;
+}
+```
+
+### ✅ Ventajas de Este Enfoque
+
+| Aspecto | Beneficio |
+|---------|-----------|
+| **Simplicidad** | No requiere desplegar ni auditar smart contracts |
+| **Costos** | Solo fees de Stellar (~0.00001 XLM por tx) |
+| **Velocidad** | Transacciones instantáneas (3-5 segundos) |
+| **Seguridad** | No custodial - fondos van directamente al proyecto |
+| **Transparencia** | Todas las transacciones verificables en blockchain |
+| **Escalabilidad** | No hay límites de gas ni congestión de red |
+
+### 🔐 Seguridad
+
+- ✅ **No custodial** - VERITAS nunca tiene acceso a los fondos
+- ✅ **Verificación on-chain** - Cada donación se verifica en Stellar
+- ✅ **Prevención de duplicados** - Se verifica que el tx_hash no exista
+- ✅ **Validación de wallets** - Se valida formato de direcciones Stellar
+- ✅ **Tolerancia de punto flotante** - Maneja diferencias mínimas en montos
+
+### 🚀 Roadmap: Smart Contracts (Futuro)
+
+Para funcionalidades avanzadas, se considerará **Soroban** (smart contracts de Stellar):
+
+**Casos de uso futuros:**
+- **Escrow con milestones** - Fondos liberados al cumplir objetivos
+- **Reembolsos automáticos** - Si proyecto no alcanza meta
+- **Gobernanza** - Donadores votan uso de fondos
+- **NFTs de reconocimiento** - Badges automáticos para top donors
+
+**Por ahora, el enfoque sin smart contracts es:**
+- ✅ Más simple y robusto
+- ✅ Ideal para MVP/Ideathon
+- ✅ Suficiente para donaciones directas
+- ✅ Fácil de auditar y mantener
+
+---
+
 ### Flujo de Transacción
 
 ```
@@ -692,6 +856,170 @@ veritas/
 3. **Choose amount** and asset (XLM/USDC)
 4. **Confirm transaction** in Freighter
 5. **Donation recorded** on-chain and in database
+
+---
+
+## 🏗️ Technical Architecture
+
+### ⚠️ No Smart Contracts (MVP)
+
+**VERITAS does NOT use smart contracts** in its current version. Donations work through **native Stellar transactions** (peer-to-peer).
+
+### Complete Donation Flow
+
+```
+┌─────────────────┐
+│   Donor User    │
+└────────┬────────┘
+         │ 1. Connect Wallet (Freighter/Albedo)
+         ▼
+┌─────────────────────────┐
+│   Frontend (Next.js)    │
+│  - Creates transaction  │
+│  - User signs with      │
+│    their wallet         │
+└────────┬────────────────┘
+         │ 2. Signed transaction
+         ▼
+┌─────────────────────────┐
+│   Stellar Network       │
+│  - Executes native pay  │
+│  - Peer-to-peer         │
+│  - No intermediaries    │
+└────────┬────────────────┘
+         │ 3. Tx Hash generated
+         ▼
+┌─────────────────────────┐
+│   Project Wallet        │
+│  - Receives funds       │
+│    directly             │
+└─────────────────────────┘
+         │
+         │ 4. Backend verifies
+         ▼
+┌─────────────────────────┐
+│  Stellar Horizon API    │
+│  - Query tx by hash     │
+│  - Verify destination   │
+│  - Verify amount        │
+└────────┬────────────────┘
+         │ 5. If valid
+         ▼
+┌─────────────────────────┐
+│  Supabase (PostgreSQL)  │
+│  - Record donation      │
+│  - Update project       │
+│  - Generate stats       │
+└─────────────────────────┘
+```
+
+### Key Components
+
+#### 1. **Stellar SDK (Client)**
+```typescript
+// src/lib/stellar/payment.ts
+// Creates native Stellar transaction (NOT a smart contract)
+const transaction = new StellarSdk.TransactionBuilder(sourceAccount)
+  .addOperation(
+    StellarSdk.Operation.payment({
+      destination: projectWallet,
+      asset: StellarSdk.Asset.native(), // XLM
+      amount: "200",
+    })
+  )
+  .build();
+
+// User signs with their wallet
+const signedXdr = await signTransaction(transaction.toXDR());
+
+// Submit to Stellar Network
+const result = await server.submitTransaction(signedTx);
+```
+
+#### 2. **Payment Verification (Backend)**
+```typescript
+// src/lib/stellar/client.ts
+async verifyPayment(txHash, destinationWallet, amount, asset) {
+  // 1. Query transaction on Stellar Horizon API
+  const tx = await server.transactions().transaction(txHash).call();
+  
+  // 2. Get transaction operations
+  const operations = await tx.operations();
+  
+  // 3. Verify that:
+  //    - A payment operation exists
+  //    - Destination is the project wallet
+  //    - Amount matches (with floating point tolerance)
+  //    - Asset matches (XLM/USDC)
+  
+  return { valid: true/false, error?: string };
+}
+```
+
+#### 3. **Database Recording**
+```typescript
+// src/lib/services/donations.ts
+async createDonation(input) {
+  // 1. Verify tx exists and is valid
+  const verification = await stellarClient.verifyPayment(...);
+  
+  if (!verification.valid) {
+    throw new Error("Payment verification failed");
+  }
+  
+  // 2. Save to Supabase
+  const donation = await supabase.from("donations").insert({
+    project_id: input.projectId,
+    donor_wallet: input.donorWallet,
+    amount: input.amount,
+    asset: input.asset,
+    tx_hash: input.txHash,
+    network: input.network,
+  });
+  
+  // 3. Update project total
+  await incrementProjectAmount(projectId, amount);
+  
+  return donation;
+}
+```
+
+### ✅ Advantages of This Approach
+
+| Aspect | Benefit |
+|---------|-----------|
+| **Simplicity** | No need to deploy or audit smart contracts |
+| **Costs** | Only Stellar fees (~0.00001 XLM per tx) |
+| **Speed** | Instant transactions (3-5 seconds) |
+| **Security** | Non-custodial - funds go directly to project |
+| **Transparency** | All transactions verifiable on blockchain |
+| **Scalability** | No gas limits or network congestion |
+
+### 🔐 Security
+
+- ✅ **Non-custodial** - VERITAS never has access to funds
+- ✅ **On-chain verification** - Each donation verified on Stellar
+- ✅ **Duplicate prevention** - Checks tx_hash doesn't exist
+- ✅ **Wallet validation** - Validates Stellar address format
+- ✅ **Floating point tolerance** - Handles minimal amount differences
+
+### 🚀 Roadmap: Smart Contracts (Future)
+
+For advanced features, **Soroban** (Stellar smart contracts) will be considered:
+
+**Future use cases:**
+- **Escrow with milestones** - Funds released upon goal completion
+- **Automatic refunds** - If project doesn't reach goal
+- **Governance** - Donors vote on fund usage
+- **Recognition NFTs** - Automatic badges for top donors
+
+**For now, the no-smart-contract approach is:**
+- ✅ Simpler and more robust
+- ✅ Ideal for MVP/Ideathon
+- ✅ Sufficient for direct donations
+- ✅ Easy to audit and maintain
+
+---
 
 ### Transaction Flow
 

@@ -76,8 +76,9 @@ export default async function ProjectsPage() {
                 style={{
                   width: "100%",
                   height: "200px",
-                  objectFit: "cover",
+                  objectFit: "contain",
                   borderRadius: "4px",
+                  backgroundColor: "#f5f5f5",
                 }}
                 loading="lazy"
                 placeholder="blur"
