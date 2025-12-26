@@ -1,55 +1,35 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <div
-      style={{
-        padding: "40px",
-        maxWidth: "800px",
-        margin: "0 auto",
-        textAlign: "center",
-      }}
-    >
-      <h1 style={{ fontSize: "48px", marginBottom: "20px" }}>StellarDonate</h1>
-      <p style={{ fontSize: "20px", color: "#666", marginBottom: "40px" }}>
-        Decentralized donation platform powered by Stellar blockchain
-      </p>
+export default async function RootPage() {
+  const cookieStore = await cookies();
 
-      <div style={{ marginBottom: "40px" }}>
-        <Link
-          href="/projects"
-          style={{
-            padding: "15px 30px",
-            background: "#0070f3",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: "8px",
-            fontSize: "18px",
-            display: "inline-block",
-          }}
-        >
-          Browse Projects
-        </Link>
-      </div>
-
-      <div style={{ textAlign: "left", marginTop: "60px" }}>
-        <h2>Features</h2>
-        <ul style={{ lineHeight: "2" }}>
-          <li>Direct peer-to-peer donations via Stellar</li>
-          <li>No custodial wallets - you control your funds</li>
-          <li>Support for XLM and USDC</li>
-          <li>Transparent on-chain verification</li>
-          <li>No platform fees</li>
-        </ul>
-
-        <h2 style={{ marginTop: "40px" }}>Tech Stack</h2>
-        <ul style={{ lineHeight: "2" }}>
-          <li>Next.js 16 (App Router)</li>
-          <li>Supabase (Auth + PostgreSQL)</li>
-          <li>Stellar SDK</li>
-          <li>TypeScript</li>
-        </ul>
-      </div>
-    </div>
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          );
+        },
+      },
+    },
   );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Redirigir con locale explícito (español por defecto)
+  if (user) {
+    redirect("/es/projects");
+  } else {
+    redirect("/es/login");
+  }
 }

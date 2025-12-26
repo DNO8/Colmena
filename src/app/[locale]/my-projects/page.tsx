@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import type { Project } from "@/lib/supabase/types";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function MyProjectsPage() {
+  const t = useTranslations("projects");
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,7 @@ export default function MyProjectsPage() {
             p.id === projectId ? { ...p, status: "published" } : p,
           ),
         );
-        alert("✅ Project published successfully!");
+        alert(t("publishSuccess"));
       } else {
         const errorData = await res.json();
 
@@ -65,11 +67,11 @@ export default function MyProjectsPage() {
         if (errorData.message) {
           alert(`❌ ${errorData.error}\n\n${errorData.message}`);
         } else {
-          alert(`❌ Error: ${errorData.error || "Failed to publish project"}`);
+          alert(`❌ Error: ${errorData.error || t("publishError")}`);
         }
       }
     } catch (error) {
-      alert("❌ Failed to publish project. Please try again.");
+      alert(t("publishError"));
     }
   };
 
@@ -86,27 +88,27 @@ export default function MyProjectsPage() {
         setProjects((prev) =>
           prev.map((p) => (p.id === projectId ? { ...p, status: "draft" } : p)),
         );
-        alert("✅ Project unpublished successfully!");
+        alert(t("unpublishSuccess"));
       } else {
         const errorData = await res.json();
-        alert(`❌ Error: ${errorData.error || "Failed to unpublish project"}`);
+        alert(`❌ Error: ${errorData.error || t("unpublishError")}`);
       }
     } catch (error) {
-      alert("❌ Failed to unpublish project. Please try again.");
+      alert(t("unpublishError"));
     }
   };
 
   if (loading) {
     return (
-      <div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>
+      <div style={{ padding: "20px", textAlign: "center" }}>{t("loading")}</div>
     );
   }
 
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-      <h1>My Projects</h1>
+      <h1>{t("myProjects")}</h1>
       <p style={{ color: "#666", marginBottom: "20px" }}>
-        Manage your projects and publish them to make them visible in the feed.
+        {t("manageProjects")}
       </p>
 
       <div style={{ marginBottom: "20px" }}>
@@ -121,12 +123,12 @@ export default function MyProjectsPage() {
             display: "inline-block",
           }}
         >
-          Create New Project
+          {t("createNewProject")}
         </Link>
       </div>
 
       {projects.length === 0 ? (
-        <p>You haven't created any projects yet.</p>
+        <p>{t("noProjectsYet")}</p>
       ) : (
         <div
           style={{
@@ -195,7 +197,7 @@ export default function MyProjectsPage() {
               </p>
 
               <p style={{ marginBottom: "15px" }}>
-                <strong>Raised:</strong> {project.current_amount} XLM
+                <strong>{t("raised")}:</strong> {project.current_amount} XLM
                 {project.goal_amount && ` / ${project.goal_amount} XLM`}
               </p>
 
@@ -217,7 +219,7 @@ export default function MyProjectsPage() {
                     fontSize: "14px",
                   }}
                 >
-                  View
+                  {t("view")}
                 </Link>
 
                 {project.status === "draft" ? (
@@ -234,7 +236,7 @@ export default function MyProjectsPage() {
                       fontWeight: "bold",
                     }}
                   >
-                    Publish
+                    {t("publish")}
                   </button>
                 ) : project.status === "published" ? (
                   <button
@@ -250,7 +252,7 @@ export default function MyProjectsPage() {
                       fontWeight: "bold",
                     }}
                   >
-                    Unpublish
+                    {t("unpublish")}
                   </button>
                 ) : null}
               </div>

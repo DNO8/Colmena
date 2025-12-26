@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import type { Project } from "@/lib/supabase/types";
 
 async function getProjects(): Promise<Project[]> {
@@ -6,7 +8,7 @@ async function getProjects(): Promise<Project[]> {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     const res = await fetch(`${baseUrl}/api/projects`, {
-      cache: "no-store",
+      next: { revalidate: 60 }, // Cache por 60 segundos
     });
 
     if (!res.ok) {
@@ -22,12 +24,13 @@ async function getProjects(): Promise<Project[]> {
 
 export default async function ProjectsPage() {
   const projects = await getProjects();
+  const t = await getTranslations("projects");
 
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-      <h1>Projects Feed</h1>
+      <h1>{t("projectsFeed")}</h1>
       <p style={{ color: "#666", fontSize: "14px" }}>
-        Total projects: {projects.length}
+        {t("totalProjects")}: {projects.length}
       </p>
 
       <div style={{ marginBottom: "20px" }}>
@@ -42,7 +45,7 @@ export default async function ProjectsPage() {
             display: "inline-block",
           }}
         >
-          Create Project
+          {t("createProject")}
         </Link>
       </div>
 
@@ -54,7 +57,7 @@ export default async function ProjectsPage() {
         }}
       >
         {projects.length === 0 ? (
-          <p>No projects yet. Create the first one!</p>
+          <p>{t("noProjects")}</p>
         ) : (
           projects.map((project) => (
             <div
@@ -65,27 +68,32 @@ export default async function ProjectsPage() {
                 borderRadius: "8px",
               }}
             >
-              <img
+              <Image
                 src={project.cover_image_url}
                 alt={project.title}
+                width={300}
+                height={200}
                 style={{
                   width: "100%",
                   height: "200px",
                   objectFit: "cover",
                   borderRadius: "4px",
                 }}
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjwvc3ZnPg=="
               />
               <h2>{project.title}</h2>
               <p>{project.short_description}</p>
               <p>
-                <strong>Raised:</strong> {project.current_amount} XLM
+                <strong>{t("raised")}:</strong> {project.current_amount} XLM
                 {project.goal_amount && ` / ${project.goal_amount} XLM`}
               </p>
               <Link
                 href={`/projects/${project.id}`}
                 style={{ color: "#0070f3" }}
               >
-                View Project →
+                {t("viewProject")} →
               </Link>
             </div>
           ))

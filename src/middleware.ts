@@ -1,11 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { locales, defaultLocale } from "./i18n/config";
+
+// Middleware de next-intl
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: "always", // Siempre agregar locale en URLs
+});
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  // 1. Ejecutar middleware de i18n
+  const response = intlMiddleware(request);
 
+  // 2. Crear cliente de Supabase
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -15,39 +24,41 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            response.cookies.set(name, value, options),
           );
         },
       },
     },
   );
 
-  // Refrescar sesión si es necesario
+  // 3. Verificar autenticación
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Proteger rutas que requieren autenticación
-  if (
-    !user &&
-    (request.nextUrl.pathname.startsWith("/projects/new") ||
-      request.nextUrl.pathname.startsWith("/my-projects") ||
-      request.nextUrl.pathname.includes("/edit") ||
-      request.nextUrl.pathname.includes("/roadmap"))
-  ) {
+  // 4. Proteger rutas privadas
+  const pathname = request.nextUrl.pathname;
+  const segments = pathname.split("/").filter(Boolean);
+  const locale = locales.includes(segments[0] as any)
+    ? segments[0]
+    : defaultLocale;
+  const pathWithoutLocale =
+    "/" +
+    segments.slice(locales.includes(segments[0] as any) ? 1 : 0).join("/");
+
+  const protectedPaths = ["/projects/new", "/my-projects", "/edit", "/roadmap"];
+  const isProtectedPath = protectedPaths.some((path) =>
+    pathWithoutLocale.includes(path),
+  );
+
+  if (!user && isProtectedPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = `/${locale}/login`;
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {

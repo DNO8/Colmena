@@ -1,12 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
+import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
+
+// Lazy load LanguageSwitcher
+const LanguageSwitcher = dynamic(() => import("./LanguageSwitcher"), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        width: "80px",
+        height: "32px",
+        background: "#f0f0f0",
+        borderRadius: "4px",
+      }}
+    />
+  ),
+});
 
 export default function Navbar() {
+  const t = useTranslations("navigation");
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
@@ -57,13 +75,15 @@ export default function Navbar() {
   };
 
   // Ocultar navbar en páginas de autenticación y complete-profile
-  const hideNavbarPaths = [
-    "/login",
-    "/signup",
-    "/complete-profile",
-    "/auth/callback",
-  ];
-  const shouldHideNavbar = hideNavbarPaths.includes(pathname);
+  const shouldHideNavbar = useMemo(() => {
+    const hideNavbarPaths = [
+      "/login",
+      "/signup",
+      "/complete-profile",
+      "/auth/callback",
+    ];
+    return hideNavbarPaths.some((path) => pathname.includes(path));
+  }, [pathname]);
 
   // Ocultar navbar si el usuario no tiene perfil completo
   if (shouldHideNavbar || (user && !hasCompleteProfile)) {
@@ -86,13 +106,13 @@ export default function Navbar() {
           href="/projects"
           style={{ color: "white", textDecoration: "none", fontWeight: "bold" }}
         >
-          StellarDonate
+          VERITAS
         </Link>
         <Link
           href="/projects"
           style={{ color: "white", textDecoration: "none" }}
         >
-          Projects
+          {t("projects")}
         </Link>
         {user && (
           <>
@@ -100,19 +120,20 @@ export default function Navbar() {
               href="/my-projects"
               style={{ color: "white", textDecoration: "none" }}
             >
-              My Projects
+              {t("myProjects")}
             </Link>
             <Link
               href="/projects/new"
               style={{ color: "white", textDecoration: "none" }}
             >
-              Create Project
+              {t("createProject")}
             </Link>
           </>
         )}
       </div>
 
       <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+        <LanguageSwitcher />
         {user ? (
           <>
             <span style={{ fontSize: "14px" }}>{user.email}</span>
@@ -128,7 +149,7 @@ export default function Navbar() {
                 fontWeight: "bold",
               }}
             >
-              Logout
+              {t("logout")}
             </button>
           </>
         ) : (
@@ -144,7 +165,7 @@ export default function Navbar() {
                 fontWeight: "bold",
               }}
             >
-              Login
+              {t("login")}
             </Link>
             <Link
               href="/signup"
@@ -158,7 +179,7 @@ export default function Navbar() {
                 fontWeight: "bold",
               }}
             >
-              Sign Up
+              {t("signup")}
             </Link>
           </>
         )}
