@@ -80,10 +80,10 @@ https://hfspqcujujuligtwuviz.supabase.co/auth/v1/callback
 
 ```env
 NEXT_PUBLIC_SITE_URL=https://colmena-beta.vercel.app
-NEXT_PUBLIC_SUPABASE_URL=https://hfspqcujujuligtwuviz.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_fX-ZiN7gNy-oXZSNeYEulQ_51UL6e33
-NEXT_SECRET_SUPABASE_KEY=sb_secret_qUN03ED443KDaOwK0C3WkA_0Mi9WNbU
-NEXT_GEMINI_API_KEY=AIzaSyAqhE5QOBki0elWV-hoHc3QDZasuK1WVVk
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+NEXT_SECRET_SUPABASE_KEY=your-service-role-key-here
+NEXT_GEMINI_API_KEY=your-gemini-api-key-here
 ```
 
 4. Asegúrate de que estén disponibles para **Production**, **Preview**, y **Development**
