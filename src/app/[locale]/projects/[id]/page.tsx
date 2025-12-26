@@ -54,8 +54,9 @@ export default function ProjectPage() {
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
-        const res = await fetch(`/api/projects/${params.id}`, {
+        const res = await fetch(`/api/projects/${params.id}?t=${Date.now()}`, {
           credentials: "include",
+          cache: "no-store",
         });
         const data = await res.json();
         setProject(data.project);

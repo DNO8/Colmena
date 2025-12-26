@@ -16,6 +16,10 @@ const updateProjectSchema = z.object({
   wallet_address: z.string().max(100).optional().nullable(),
 });
 
+// Disable caching for this route to always get fresh data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -28,7 +32,18 @@ export async function GET(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ project }, { status: 200 });
+    return NextResponse.json(
+      { project },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
+    );
   } catch (error) {
     return NextResponse.json(
       {
