@@ -155,7 +155,7 @@ export default function ProjectPage() {
       }
 
       // Record donation in database
-      await fetch("/api/donations", {
+      const donationResponse = await fetch("/api/donations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -167,6 +167,14 @@ export default function ProjectPage() {
           network: "TESTNET",
         }),
       });
+
+      if (!donationResponse.ok) {
+        const errorData = await donationResponse.json().catch(() => ({}));
+        console.error("Failed to record donation:", errorData);
+        throw new Error(
+          `Failed to record donation in database: ${errorData.error || donationResponse.statusText}`,
+        );
+      }
 
       alert(
         `✅ Donation successful!\n\nAmount: ${amount} ${asset}\nTransaction: ${result.hash.substring(0, 8)}...${result.hash.substring(result.hash.length - 8)}\n\nThank you for supporting this project!`,
