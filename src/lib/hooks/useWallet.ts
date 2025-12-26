@@ -34,15 +34,13 @@ export interface WalletState {
 }
 
 export function useWallet() {
-  const [state, setState] = useState<WalletState>({
-    isConnected: false,
-    publicKey: null,
-    network: null,
-    walletType: null,
-    isLoading: false,
-    error: null,
-    availableWallets: [],
-  });
+  const [isConnected, setIsConnected] = useState(false);
+  const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [network, setNetwork] = useState<string | null>(null);
+  const [walletType, setWalletType] = useState<WalletType | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [availableWallets, setAvailableWallets] = useState<WalletType[]>([]);
 
   // Check which wallets are available
   const checkAvailableWallets = useCallback(async () => {
@@ -63,18 +61,19 @@ export function useWallet() {
       available.push(WalletType.XBULL);
     }
 
-    setState((prev) => ({ ...prev, availableWallets: available }));
+    setAvailableWallets(available);
     return available;
   }, []);
 
   // Connect to a specific wallet
-  const connect = useCallback(async (walletType: WalletType) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+  const connect = useCallback(async (type: WalletType) => {
+    setIsLoading(true);
+    setError(null);
 
     try {
       let connection: WalletConnection;
 
-      switch (walletType) {
+      switch (type) {
         case WalletType.FREIGHTER:
           connection = await connectFreighter();
           break;
@@ -85,23 +84,22 @@ export function useWallet() {
           connection = await connectXBull();
           break;
         default:
-          throw new Error(`Unsupported wallet type: ${walletType}`);
+          throw new Error(`Unsupported wallet type: ${type}`);
       }
 
       console.log("✅ Wallet connected:", connection.publicKey.substring(0, 8));
 
-      const newState = {
-        isConnected: true,
-        publicKey: connection.publicKey,
-        network: connection.network,
-        walletType: connection.walletType,
-        isLoading: false,
-        error: null,
-        availableWallets: state.availableWallets,
-      };
+      // Update all state individually to trigger re-render
+      setIsConnected(true);
+      setPublicKey(connection.publicKey);
+      setNetwork(connection.network);
+      setWalletType(connection.walletType);
+      setIsLoading(false);
 
-      console.log("📝 Setting new state:", newState);
-      setState(newState);
+      console.log(
+        "📝 State updated - isConnected: true, publicKey:",
+        connection.publicKey.substring(0, 8),
+      );
 
       // Save wallet address to user profile
       try {
@@ -121,19 +119,16 @@ export function useWallet() {
       }
 
       return true;
-    } catch (error) {
+    } catch (err) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to connect wallet";
+        err instanceof Error ? err.message : "Failed to connect wallet";
 
-      setState((prev) => ({
-        ...prev,
-        isConnected: false,
-        publicKey: null,
-        network: null,
-        walletType: null,
-        isLoading: false,
-        error: errorMessage,
-      }));
+      setIsConnected(false);
+      setPublicKey(null);
+      setNetwork(null);
+      setWalletType(null);
+      setIsLoading(false);
+      setError(errorMessage);
 
       return false;
     }
@@ -141,76 +136,56 @@ export function useWallet() {
 
   // Disconnect wallet
   const disconnect = useCallback(() => {
-    setState((prev) => {
-      if (prev.walletType === WalletType.XBULL) {
-        disconnectXBull();
-      }
+    if (walletType === WalletType.XBULL) {
+      disconnectXBull();
+    }
 
-      return {
-        ...prev,
-        isConnected: false,
-        publicKey: null,
-        network: null,
-        walletType: null,
-        isLoading: false,
-        error: null,
-      };
-    });
-  }, []);
+    setIsConnected(false);
+    setPublicKey(null);
+    setNetwork(null);
+    setWalletType(null);
+    setIsLoading(false);
+    setError(null);
+  }, [walletType]);
 
   // Sign transaction with current wallet
   const signTransaction = useCallback(
     async (xdr: string, networkPassphrase?: string) => {
-      return new Promise<string>((resolve, reject) => {
-        setState((prev) => {
-          if (!prev.isConnected || !prev.walletType) {
-            reject(new Error("Wallet is not connected"));
-            return prev;
-          }
+      if (!isConnected || !walletType) {
+        throw new Error("Wallet is not connected");
+      }
 
-          (async () => {
-            try {
-              let signedXdr: string;
+      try {
+        let signedXdr: string;
 
-              switch (prev.walletType) {
-                case WalletType.FREIGHTER:
-                  signedXdr = await signFreighterTransaction(xdr, {
-                    networkPassphrase,
-                  });
-                  break;
-                case WalletType.ALBEDO:
-                  signedXdr = await signAlbedoTransaction(xdr, {
-                    networkPassphrase,
-                  });
-                  break;
-                case WalletType.XBULL:
-                  signedXdr = await signXBullTransaction(xdr, {
-                    networkPassphrase,
-                  });
-                  break;
-                default:
-                  throw new Error(
-                    `Unsupported wallet type: ${prev.walletType}`,
-                  );
-              }
+        switch (walletType) {
+          case WalletType.FREIGHTER:
+            signedXdr = await signFreighterTransaction(xdr, {
+              networkPassphrase,
+            });
+            break;
+          case WalletType.ALBEDO:
+            signedXdr = await signAlbedoTransaction(xdr, {
+              networkPassphrase,
+            });
+            break;
+          case WalletType.XBULL:
+            signedXdr = await signXBullTransaction(xdr, {
+              networkPassphrase,
+            });
+            break;
+          default:
+            throw new Error(`Unsupported wallet type: ${walletType}`);
+        }
 
-              resolve(signedXdr);
-            } catch (error) {
-              reject(
-                new Error(
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to sign transaction",
-                ),
-              );
-            }
-          })();
-
-          return prev;
-        });
-      });
+        return signedXdr;
+      } catch (error) {
+        throw new Error(
+          error instanceof Error ? error.message : "Failed to sign transaction",
+        );
+      }
     },
-    [],
+    [isConnected, walletType],
   );
 
   // Get wallet info
@@ -224,7 +199,13 @@ export function useWallet() {
   }, [checkAvailableWallets]);
 
   return {
-    ...state,
+    isConnected,
+    publicKey,
+    network,
+    walletType,
+    isLoading,
+    error,
+    availableWallets,
     connect,
     disconnect,
     signTransaction,
