@@ -31,7 +31,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
     const aspectRatio = img.naturalHeight / img.naturalWidth;
     const width = 400;
     const calculatedHeight = Math.round(width * aspectRatio);
-    setImageHeight(Math.min(Math.max(calculatedHeight, 200), 600));
+    // Limitar altura mínima y máxima para mejor aspecto en móvil
+    setImageHeight(Math.min(Math.max(calculatedHeight, 150), 450));
   };
 
   const handleCardClick = () => {

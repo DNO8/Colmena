@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Logo from "@/components/Logo";
 import { supabase } from "@/lib/supabase/client";
+import gsap from "gsap";
 
 interface Project {
   id: string;
@@ -18,15 +19,15 @@ interface Project {
   status: string;
 }
 
-const CATEGORIES = [
-  { id: "all", label: "Todos", icon: "🌐" },
-  { id: "social", label: "Social", icon: "🤝" },
-  { id: "tech", label: "Tecnología", icon: "💻" },
-  { id: "education", label: "Educación", icon: "📚" },
-  { id: "environment", label: "Ambiente", icon: "🌱" },
-  { id: "art", label: "Arte", icon: "🎨" },
-  { id: "health", label: "Salud", icon: "🏥" },
-];
+const CATEGORY_ICONS: Record<string, string> = {
+  all: "🌐",
+  social: "🤝",
+  tech: "💻",
+  education: "📚",
+  environment: "🌱",
+  art: "🎨",
+  health: "🏥",
+};
 
 const MILESTONES = [
   {
@@ -58,6 +59,24 @@ const MILESTONES = [
 export default function Home() {
   const t = useTranslations("home");
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const CATEGORIES = [
+    { id: "all", label: t("categoryAll"), icon: CATEGORY_ICONS.all },
+    { id: "social", label: t("categorySocial"), icon: CATEGORY_ICONS.social },
+    { id: "tech", label: t("categoryTech"), icon: CATEGORY_ICONS.tech },
+    {
+      id: "education",
+      label: t("categoryEducation"),
+      icon: CATEGORY_ICONS.education,
+    },
+    {
+      id: "environment",
+      label: t("categoryEnvironment"),
+      icon: CATEGORY_ICONS.environment,
+    },
+    { id: "art", label: t("categoryArt"), icon: CATEGORY_ICONS.art },
+    { id: "health", label: t("categoryHealth"), icon: CATEGORY_ICONS.health },
+  ];
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +134,7 @@ export default function Home() {
             className="flex justify-center mb-8"
           >
             <span className="px-4 py-2 bg-black text-white font-mono text-sm border-2 border-black">
-              🚀 PROTOCOLO ABIERTO EN STELLAR
+              {t("badge")}
             </span>
           </motion.div>
 
@@ -127,9 +146,9 @@ export default function Home() {
             className="text-center mb-8"
           >
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-none">
-              <span className="block">FINANCIA</span>
-              <span className="block text-[#E67E22]">IMPACTO</span>
-              <span className="block">REAL</span>
+              <span className="block">{t("titleLine1")}</span>
+              <span className="block text-[#E67E22]">{t("titleLine2")}</span>
+              <span className="block">{t("titleLine3")}</span>
             </h1>
           </motion.div>
 
@@ -140,8 +159,7 @@ export default function Home() {
             transition={{ delay: 0.3 }}
             className="text-center text-lg md:text-xl text-black/70 max-w-2xl mx-auto mb-10"
           >
-            Crowdfunding transparente con la tecnología blockchain. Cada
-            donación verificable, sin intermediarios, sin fronteras.
+            {t("subtitle")}
           </motion.p>
 
           {/* CTA Buttons */}
@@ -155,13 +173,13 @@ export default function Home() {
               href="/projects"
               className="btn-brutal btn-brutal-dark text-lg"
             >
-              EXPLORAR PROYECTOS →
+              {t("exploreProjectsBtn")}
             </Link>
             <Link
               href="/projects/new"
               className="btn-brutal btn-brutal-outline text-lg bg-white"
             >
-              CREAR PROYECTO
+              {t("createProjectBtn")}
             </Link>
           </motion.div>
 
@@ -172,20 +190,14 @@ export default function Home() {
             transition={{ delay: 0.5 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto"
           >
-            <StatCard value="$2.4M" label="FONDOS RECAUDADOS" icon="💰" />
-            <StatCard value="847" label="PROYECTOS FINANCIADOS" icon="📊" />
-            <StatCard value="15K+" label="DONADORES ACTIVOS" icon="🐝" />
+            <StatCard value="$2.4M" label={t("statFundsRaised")} icon="💰" />
+            <StatCard value="847" label={t("statProjectsFunded")} icon="📊" />
+            <StatCard value="15K+" label={t("statActiveDonors")} icon="🐝" />
           </motion.div>
         </div>
 
-        {/* Decorative bee */}
-        <motion.div
-          animate={{ y: [0, -15, 0], rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 4, repeat: Infinity }}
-          className="absolute top-10 right-10 text-6xl hidden lg:block"
-        >
-          🐝
-        </motion.div>
+        {/* Interactive Bee that follows cursor */}
+        <FollowingBee />
       </section>
 
       {/* Projects Section - "IMPULSA EL CAMBIO" */}
@@ -199,7 +211,8 @@ export default function Home() {
             className="mb-10"
           >
             <h2 className="text-4xl md:text-5xl font-bold">
-              IMPULSA EL <span className="text-[#E67E22]">CAMBIO</span>
+              {t("driveChange")}{" "}
+              <span className="text-[#E67E22]">{t("change")}</span>
             </h2>
           </motion.div>
 
@@ -227,8 +240,7 @@ export default function Home() {
 
           {/* Subtitle */}
           <p className="text-gray-600 mb-8 max-w-2xl">
-            Descubre proyectos que están transformando comunidades. Cada
-            donación cuenta, cada peso genera impacto real.
+            {t("projectsSubtitle")}
           </p>
 
           {/* Projects Grid */}
@@ -241,7 +253,7 @@ export default function Home() {
           {/* View All Button */}
           <div className="text-center">
             <Link href="/projects" className="btn-brutal btn-brutal-outline">
-              VER TODOS LOS PROYECTOS →
+              {t("viewAllProjects")}
             </Link>
           </div>
         </div>
@@ -257,11 +269,11 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              CERO <span className="text-[#E67E22]">FRICCIÓN</span>
+              {t("zeroFriction")}{" "}
+              <span className="text-[#E67E22]">{t("friction")}</span>
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              En pocos clicks tu donación llega directamente al proyecto. Sin
-              intermediarios, sin comisiones ocultas.
+              {t("frictionSubtitle")}
             </p>
           </motion.div>
 
@@ -269,29 +281,29 @@ export default function Home() {
             <ProcessStep
               number="01"
               icon="🔍"
-              title="CONECTA"
-              description="Vincula tu wallet Stellar en segundos"
+              title={t("step1Title")}
+              description={t("step1Desc")}
               delay={0}
             />
             <ProcessStep
               number="02"
               icon="🎯"
-              title="ELIGE"
-              description="Explora y selecciona proyectos verificados"
+              title={t("step2Title")}
+              description={t("step2Desc")}
               delay={0.1}
             />
             <ProcessStep
               number="03"
               icon="💸"
-              title="FINANCIA"
-              description="Dona en XLM o USDC con fees mínimos"
+              title={t("step3Title")}
+              description={t("step3Desc")}
               delay={0.2}
             />
             <ProcessStep
               number="04"
               icon="📈"
-              title="IMPACTA"
-              description="Sigue el progreso en tiempo real on-chain"
+              title={t("step4Title")}
+              description={t("step4Desc")}
               delay={0.3}
             />
           </div>
@@ -303,7 +315,7 @@ export default function Home() {
             className="text-center mt-10"
           >
             <Link href="/signup" className="btn-brutal btn-brutal-primary">
-              CREAR CUENTA →
+              {t("createAccountBtn")}
             </Link>
           </motion.div>
         </div>
@@ -319,14 +331,14 @@ export default function Home() {
             className="text-center mb-12"
           >
             <span className="px-4 py-2 bg-black text-white font-mono text-sm inline-block mb-4">
-              🎯 ROADMAP 2025
+              {t("roadmapBadge")}
             </span>
             <h2 className="text-4xl md:text-5xl font-bold">
-              HITOS DE <span className="text-[#E67E22]">IMPACTO</span>
+              {t("impactMilestones")}{" "}
+              <span className="text-[#E67E22]">{t("impact")}</span>
             </h2>
             <p className="text-black/70 mt-4 max-w-xl mx-auto">
-              Los hitos que estamos alcanzando juntos. Cada meta cumplida es un
-              paso hacia un ecosistema más justo.
+              {t("milestonesSubtitle")}
             </p>
           </motion.div>
 
@@ -347,39 +359,39 @@ export default function Home() {
               <div className="flex items-center gap-2 mb-4">
                 <Logo size="md" showText={true} animated={false} />
               </div>
-              <p className="text-gray-400 text-sm">
-                Protocolo de crowdfunding transparente sobre Stellar Network.
-              </p>
+              <p className="text-gray-400 text-sm">{t("footerDesc")}</p>
             </div>
 
             {/* Links */}
             <div>
-              <h4 className="font-bold mb-4 text-[#FDCB6E]">PLATAFORMA</h4>
+              <h4 className="font-bold mb-4 text-[#FDCB6E]">{t("platform")}</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>
                   <Link href="/projects" className="hover:text-white">
-                    Explorar Proyectos
+                    {t("exploreProjects")}
                   </Link>
                 </li>
                 <li>
                   <Link href="/projects/new" className="hover:text-white">
-                    Crear Proyecto
+                    {t("createProject")}
                   </Link>
                 </li>
                 <li>
                   <Link href="/my-projects" className="hover:text-white">
-                    Mis Proyectos
+                    {t("myProjects")}
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold mb-4 text-[#FDCB6E]">RECURSOS</h4>
+              <h4 className="font-bold mb-4 text-[#FDCB6E]">
+                {t("resources")}
+              </h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>
                   <a href="#" className="hover:text-white">
-                    Documentación
+                    {t("documentation")}
                   </a>
                 </li>
                 <li>
@@ -389,28 +401,28 @@ export default function Home() {
                 </li>
                 <li>
                   <a href="#" className="hover:text-white">
-                    Soporte
+                    {t("support")}
                   </a>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold mb-4 text-[#FDCB6E]">LEGAL</h4>
+              <h4 className="font-bold mb-4 text-[#FDCB6E]">{t("legal")}</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>
                   <a href="#" className="hover:text-white">
-                    Términos de Uso
+                    {t("termsOfUse")}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-white">
-                    Privacidad
+                    {t("privacy")}
                   </a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-white">
-                    Cookies
+                    {t("cookies")}
                   </a>
                 </li>
               </ul>
@@ -419,9 +431,7 @@ export default function Home() {
 
           {/* Bottom */}
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500">
-              © 2025 Colmena. Construido con 🍯 sobre Stellar.
-            </p>
+            <p className="text-sm text-gray-500">{t("footerCopyright")}</p>
             <div className="flex gap-4">
               <span className="px-3 py-1 bg-[#FDCB6E] text-black text-xs font-bold border-2 border-[#FDCB6E]">
                 TESTNET
@@ -466,7 +476,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
   const raised = Number(project.current_amount) || 0;
   const goal = Number(project.goal_amount) || 1;
   const progress = Math.round((raised / goal) * 100);
-  const category = CATEGORIES.find((c) => c.id === project.category);
+  const categoryIcon = project.category
+    ? CATEGORY_ICONS[project.category]
+    : null;
 
   return (
     <Link href={`/projects/${project.id}`}>
@@ -484,10 +496,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             alt={project.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          {category && (
+          {categoryIcon && (
             <div className="absolute top-3 left-3">
               <span className="px-2 py-1 bg-[#FDCB6E] text-black text-xs font-bold border-2 border-black">
-                {category.icon} {category.label}
+                {categoryIcon} {project.category}
               </span>
             </div>
           )}
@@ -592,5 +604,117 @@ function MilestoneBar({
         {milestone.progress}%
       </p>
     </motion.div>
+  );
+}
+
+function FollowingBee() {
+  const beeRef = useRef<HTMLDivElement>(null);
+  const [isInHero, setIsInHero] = useState(false);
+
+  useEffect(() => {
+    const bee = beeRef.current;
+    if (!bee) return;
+
+    // Initial position
+    gsap.set(bee, { x: 0, y: 0, scale: 1 });
+
+    // Idle floating animation
+    const floatAnimation = gsap.to(bee, {
+      y: -15,
+      rotation: 5,
+      duration: 1.5,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const heroSection = document.querySelector("section");
+      if (!heroSection) return;
+
+      const rect = heroSection.getBoundingClientRect();
+      const isInside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+
+      setIsInHero(isInside);
+
+      if (isInside) {
+        // Calculate position relative to hero section
+        const offsetX = 20; // Distance from cursor
+        const offsetY = -20;
+
+        // Determine which side of cursor to position bee
+        const beeX = e.clientX - rect.left + offsetX;
+        const beeY = e.clientY - rect.top + offsetY;
+
+        // Smooth follow with GSAP
+        gsap.to(bee, {
+          x: beeX,
+          y: beeY,
+          duration: 0.4,
+          ease: "power2.out",
+          overwrite: true,
+        });
+
+        // Rotate bee based on movement direction
+        const rotation = e.movementX > 0 ? 10 : e.movementX < 0 ? -10 : 0;
+        gsap.to(bee, {
+          rotation: rotation,
+          duration: 0.2,
+        });
+      }
+    };
+
+    const handleMouseLeave = () => {
+      setIsInHero(false);
+      // Return to default position
+      gsap.to(bee, {
+        x: window.innerWidth - 150,
+        y: 50,
+        duration: 0.8,
+        ease: "elastic.out(1, 0.5)",
+      });
+    };
+
+    // Set initial position
+    gsap.set(bee, { x: window.innerWidth - 150, y: 50 });
+
+    window.addEventListener("mousemove", handleMouseMove);
+    document
+      .querySelector("section")
+      ?.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      floatAnimation.kill();
+      window.removeEventListener("mousemove", handleMouseMove);
+      document
+        .querySelector("section")
+        ?.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={beeRef}
+      className="absolute pointer-events-none z-50 text-5xl lg:text-6xl hidden md:block select-none"
+      style={{ top: 0, left: 0, willChange: "transform" }}
+    >
+      <span
+        className={`inline-block transition-transform duration-200 ${
+          isInHero ? "scale-110" : "scale-100"
+        }`}
+      >
+        🐝
+      </span>
+      {/* Wing flutter effect */}
+      {isInHero && (
+        <span className="absolute -top-1 -right-1 text-xs animate-ping opacity-50">
+          ✨
+        </span>
+      )}
+    </div>
   );
 }
