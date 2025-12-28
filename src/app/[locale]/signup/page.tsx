@@ -1,25 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
+import { useNotification } from "@/components/NotificationToast";
 
 export default function SignupPage() {
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+  const t = useTranslations("auth");
+  const tProfile = useTranslations("profile");
+  const tCommon = useTranslations("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<"person" | "startup" | "project" | "pyme">("person");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { showNotification, NotificationContainer } = useNotification();
 
   const handleGoogleSignup = async () => {
     setGoogleLoading(true);
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    const locale = window.location.pathname.split("/")[1] || "es";
     const redirectUrl = `${siteUrl}/${locale}/auth/callback`;
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -35,7 +42,7 @@ export default function SignupPage() {
     });
 
     if (error) {
-      alert(`Error: ${error.message}`);
+      showNotification(`Error: ${error.message}`, "error");
       setGoogleLoading(false);
     }
   };
@@ -51,7 +58,7 @@ export default function SignupPage() {
       });
 
       if (authError) {
-        alert(`Error: ${authError.message}`);
+        showNotification(`Error: ${authError.message}`, "error");
         setLoading(false);
         return;
       }
@@ -65,30 +72,32 @@ export default function SignupPage() {
         } as any);
 
         if (userError) {
-          alert(`Error creating user profile: ${userError.message}`);
+          showNotification(`${t("errorCreatingProfile")}: ${userError.message}`, "error");
         } else {
-          alert("Account created! Please check your email to verify.");
-          router.push("/login");
+          showNotification(t("accountCreated"), "success");
+          router.push(`/${locale}/login`);
         }
       }
 
       setLoading(false);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to sign up");
+      showNotification(error instanceof Error ? error.message : "Error al registrarse", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const roleOptions = [
-    { value: "person", label: "👤 Persona", desc: "Creador individual" },
-    { value: "startup", label: "🚀 Startup", desc: "Empresa emergente" },
-    { value: "project", label: "📋 Proyecto", desc: "Iniciativa específica" },
-    { value: "pyme", label: "🏢 PYME", desc: "Pequeña/mediana empresa" },
+    { value: "person", label: `👤 ${tProfile("person")}`, desc: tProfile("personDesc") },
+    { value: "startup", label: `🚀 ${tProfile("startup")}`, desc: tProfile("startupDesc") },
+    { value: "project", label: `📋 ${tProfile("project")}`, desc: tProfile("projectDesc") },
+    { value: "pyme", label: `🏢 ${tProfile("pyme")}`, desc: tProfile("pymeDesc") },
   ];
 
   return (
-    <div className="min-h-screen hex-pattern flex items-center justify-center p-4 py-12">
+    <>
+      {NotificationContainer}
+      <div className="min-h-screen hex-pattern flex items-center justify-center p-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -103,8 +112,8 @@ export default function SignupPage() {
           >
             🍯
           </motion.div>
-          <h1 className="text-4xl font-bold mb-2">Únete a la Colmena</h1>
-          <p className="text-gray-600">Crea tu cuenta y comienza a generar impacto</p>
+          <h1 className="text-4xl font-bold mb-2">{t("joinTheHive")}</h1>
+          <p className="text-gray-600">{t("createAccountSubtitle")}</p>
         </div>
 
         {/* Card */}
@@ -123,7 +132,7 @@ export default function SignupPage() {
               <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
               <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
             </svg>
-            {googleLoading ? "Conectando..." : "Continuar con Google"}
+            {googleLoading ? t("connecting") : t("continueWithGoogle")}
           </motion.button>
 
           {/* Divider */}
@@ -132,7 +141,7 @@ export default function SignupPage() {
               <div className="w-full border-t-2 border-black" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-white px-4 font-mono text-sm text-gray-500">o</span>
+              <span className="bg-white px-4 font-mono text-sm text-gray-500">{tCommon("or")}</span>
             </div>
           </div>
 
@@ -140,7 +149,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="name" className="block font-bold mb-2">
-                Nombre *
+                {t("name")} *
               </label>
               <input
                 id="name"
@@ -149,13 +158,13 @@ export default function SignupPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input-brutal"
-                placeholder="Tu nombre"
+                placeholder={t("namePlaceholder")}
               />
             </div>
 
             <div>
               <label htmlFor="email" className="block font-bold mb-2">
-                Email *
+                {t("email")} *
               </label>
               <input
                 id="email"
@@ -164,13 +173,13 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-brutal"
-                placeholder="tu@email.com"
+                placeholder={t("emailPlaceholder")}
               />
             </div>
 
             <div>
               <label htmlFor="password" className="block font-bold mb-2">
-                Contraseña *
+                {t("password")} *
               </label>
               <input
                 id="password"
@@ -180,13 +189,13 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-brutal"
-                placeholder="••••••••"
+                placeholder={t("passwordPlaceholder")}
               />
-              <p className="mt-1 font-mono text-xs text-gray-500">Mínimo 6 caracteres</p>
+              <p className="mt-1 font-mono text-xs text-gray-500">{t("minPasswordLength")}</p>
             </div>
 
             <div>
-              <label className="block font-bold mb-2">Tipo de cuenta *</label>
+              <label className="block font-bold mb-2">{t("accountType")} *</label>
               <div className="grid grid-cols-2 gap-2">
                 {roleOptions.map((option) => (
                   <motion.button
@@ -215,26 +224,27 @@ export default function SignupPage() {
               disabled={loading}
               className={`w-full btn-brutal ${loading ? "bg-gray-300 cursor-not-allowed" : "btn-brutal-primary"}`}
             >
-              {loading ? "Creando cuenta..." : "🐝 Crear Cuenta"}
+              {loading ? t("creatingAccount") : t("createAccount")}
             </motion.button>
           </form>
 
           {/* Footer */}
           <p className="mt-6 text-center text-sm text-gray-600">
-            ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="font-bold text-[#E67E22] hover:underline">
-              Inicia sesión
+            {t("alreadyHaveAccount")}{" "}
+            <Link href={`/${locale}/login`} className="font-bold text-secondary hover:underline">
+              {t("login")}
             </Link>
           </p>
         </div>
 
         {/* Back Link */}
         <div className="text-center mt-6">
-          <Link href="/" className="font-mono text-sm text-gray-500 hover:text-black">
-            ← Volver al inicio
+          <Link href={`/${locale}`} className="font-mono text-sm text-gray-500 hover:text-black">
+            {t("backToHome")}
           </Link>
         </div>
       </motion.div>
     </div>
+    </>
   );
 }

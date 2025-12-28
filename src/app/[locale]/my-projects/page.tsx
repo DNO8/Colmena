@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import LoadingBee from "@/components/LoadingBee";
+import { useNotification } from "@/components/NotificationToast";
 
 export default function MyProjectsPage() {
   const t = useTranslations("projects");
@@ -15,6 +16,7 @@ export default function MyProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const { showNotification, NotificationContainer } = useNotification();
 
   useEffect(() => {
     const fetchUserProjects = async () => {
@@ -61,17 +63,17 @@ export default function MyProjectsPage() {
             p.id === projectId ? { ...p, status: "published" } : p,
           ),
         );
-        alert(t("publishSuccess"));
+        showNotification(t("publishSuccess"), "success");
       } else {
         const errorData = await res.json();
         if (errorData.message) {
-          alert(`❌ ${errorData.error}\n\n${errorData.message}`);
+          showNotification(`${errorData.error}: ${errorData.message}`, "error");
         } else {
-          alert(`❌ Error: ${errorData.error || t("publishError")}`);
+          showNotification(`Error: ${errorData.error || t("publishError")}`, "error");
         }
       }
     } catch (error) {
-      alert(t("publishError"));
+      showNotification(t("publishError"), "error");
     }
   };
 
@@ -88,13 +90,13 @@ export default function MyProjectsPage() {
         setProjects((prev) =>
           prev.map((p) => (p.id === projectId ? { ...p, status: "draft" } : p)),
         );
-        alert(t("unpublishSuccess"));
+        showNotification(t("unpublishSuccess"), "success");
       } else {
         const errorData = await res.json();
-        alert(`❌ Error: ${errorData.error || t("unpublishError")}`);
+        showNotification(`Error: ${errorData.error || t("unpublishError")}`, "error");
       }
     } catch (error) {
-      alert(t("unpublishError"));
+      showNotification(t("unpublishError"), "error");
     }
   };
 
@@ -103,8 +105,10 @@ export default function MyProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+    <>
+      {NotificationContainer}
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -212,8 +216,8 @@ export default function MyProjectsPage() {
                           className="h-full bg-[#FDCB6E]"
                           style={{
                             width: `${Math.min(
-                              ((project.current_amount || 0) /
-                                project.goal_amount) *
+                              ((Number(project.current_amount) || 0) /
+                                Number(project.goal_amount)) *
                                 100,
                               100
                             )}%`,
@@ -260,5 +264,6 @@ export default function MyProjectsPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

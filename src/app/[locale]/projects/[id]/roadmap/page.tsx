@@ -6,6 +6,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import LoadingBee from "@/components/LoadingBee";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
+import { useNotification } from "@/components/NotificationToast";
 
 interface RoadmapItem {
   id: string;
@@ -29,6 +31,8 @@ export default function ManageRoadmapPage() {
     description: "",
     estimatedCost: "",
   });
+  const { showConfirm, ConfirmDialogComponent } = useConfirmDialog();
+  const { showNotification, NotificationContainer } = useNotification();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,7 +55,7 @@ export default function ManageRoadmapPage() {
 
         // Verificar ownership
         if (data.project.owner_id !== user.id) {
-          alert("You don't have permission to manage this roadmap");
+          showNotification("No tienes permiso para gestionar este roadmap", "error");
           router.push(`/projects/${params.id}`);
           return;
         }
@@ -68,7 +72,7 @@ export default function ManageRoadmapPage() {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        alert("Failed to load roadmap");
+        showNotification("Error al cargar el roadmap", "error");
         router.push("/projects");
       } finally {
         setLoading(false);
@@ -91,14 +95,9 @@ export default function ManageRoadmapPage() {
       const goalAmount = parseFloat(project.goal_amount);
 
       if (newTotal > goalAmount) {
-        alert(
-          `❌ Cannot add item\n\n` +
-            `This would exceed the project goal amount.\n\n` +
-            `Current total: ${currentTotal.toFixed(2)} XLM\n` +
-            `New item cost: ${newItemCost.toFixed(2)} XLM\n` +
-            `New total: ${newTotal.toFixed(2)} XLM\n` +
-            `Goal amount: ${goalAmount.toFixed(2)} XLM\n\n` +
-            `Remaining budget: ${(goalAmount - currentTotal).toFixed(2)} XLM`,
+        showNotification(
+          `No se puede agregar: excedería el monto objetivo. Total actual: ${currentTotal.toFixed(2)} XLM + Nuevo: ${newItemCost.toFixed(2)} XLM = ${newTotal.toFixed(2)} XLM (Meta: ${goalAmount.toFixed(2)} XLM)`,
+          "warning"
         );
         return;
       }
@@ -125,14 +124,14 @@ export default function ManageRoadmapPage() {
         const data = await res.json();
         setItems([...items, data.item]);
         setFormData({ title: "", description: "", estimatedCost: "" });
-        alert("Roadmap item added!");
+        showNotification("¡Hito agregado exitosamente!", "success");
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        showNotification(`Error: ${error.error}`, "error");
       }
     } catch (error) {
       console.error("Error adding item:", error);
-      alert("Failed to add roadmap item");
+      showNotification("Error al agregar hito del roadmap", "error");
     } finally {
       setSaving(false);
     }
@@ -151,14 +150,9 @@ export default function ManageRoadmapPage() {
       const goalAmount = parseFloat(project.goal_amount);
 
       if (newTotal > goalAmount) {
-        alert(
-          `❌ Cannot update item\n\n` +
-            `This would exceed the project goal amount.\n\n` +
-            `Other items total: ${currentTotal.toFixed(2)} XLM\n` +
-            `This item cost: ${newItemCost.toFixed(2)} XLM\n` +
-            `New total: ${newTotal.toFixed(2)} XLM\n` +
-            `Goal amount: ${goalAmount.toFixed(2)} XLM\n\n` +
-            `Remaining budget: ${(goalAmount - currentTotal).toFixed(2)} XLM`,
+        showNotification(
+          `No se puede actualizar: excedería el monto objetivo. Otros items: ${currentTotal.toFixed(2)} XLM + Este: ${newItemCost.toFixed(2)} XLM = ${newTotal.toFixed(2)} XLM (Meta: ${goalAmount.toFixed(2)} XLM)`,
+          "warning"
         );
         return;
       }
@@ -186,21 +180,31 @@ export default function ManageRoadmapPage() {
         setItems(items.map((item) => (item.id === itemId ? data.item : item)));
         setEditingId(null);
         setFormData({ title: "", description: "", estimatedCost: "" });
-        alert("Roadmap item updated!");
+        showNotification("¡Hito actualizado exitosamente!", "success");
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        showNotification(`Error: ${error.error}`, "error");
       }
     } catch (error) {
       console.error("Error updating item:", error);
-      alert("Failed to update roadmap item");
+      showNotification("Error al actualizar hito del roadmap", "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this roadmap item?")) {
+    const confirmed = await showConfirm(
+      "Eliminar hito",
+      "¿Estás seguro de que quieres eliminar este hito del roadmap? Esta acción no se puede deshacer.",
+      {
+        confirmText: "Eliminar",
+        cancelText: "Cancelar",
+        type: "danger",
+      }
+    );
+    
+    if (!confirmed) {
       return;
     }
 
@@ -215,14 +219,14 @@ export default function ManageRoadmapPage() {
 
       if (res.ok) {
         setItems(items.filter((item) => item.id !== itemId));
-        alert("Roadmap item deleted!");
+        showNotification("¡Hito eliminado exitosamente!", "success");
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        showNotification(`Error: ${error.error}`, "error");
       }
     } catch (error) {
       console.error("Error deleting item:", error);
-      alert("Failed to delete roadmap item");
+      showNotification("Error al eliminar hito del roadmap", "error");
     }
   };
 
@@ -263,8 +267,11 @@ export default function ManageRoadmapPage() {
   const percentage = goalAmount > 0 ? (currentTotal / goalAmount) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <>
+      {ConfirmDialogComponent}
+      {NotificationContainer}
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -490,5 +497,6 @@ export default function ManageRoadmapPage() {
         </motion.div>
       </div>
     </div>
+    </>
   );
 }

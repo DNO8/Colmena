@@ -6,6 +6,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import LoadingBee from "@/components/LoadingBee";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
+import { useNotification } from "@/components/NotificationToast";
 
 const CATEGORIES = [
   { id: "social", label: "Social", icon: "🤝" },
@@ -19,10 +21,15 @@ const CATEGORIES = [
 export default function EditProjectPage() {
   const params = useParams();
   const router = useRouter();
+  const locale = params.locale as string;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [project, setProject] = useState<any>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const { showConfirm, ConfirmDialogComponent } = useConfirmDialog();
+  const { showNotification, NotificationContainer } = useNotification();
   const [formData, setFormData] = useState({
     title: "",
     shortDescription: "",
@@ -40,7 +47,7 @@ export default function EditProjectPage() {
         } = await supabase.auth.getUser();
 
         if (!user) {
-          router.push("/login");
+          router.push(`/${locale}/login`);
           return;
         }
 
@@ -50,7 +57,7 @@ export default function EditProjectPage() {
         const data = await res.json();
 
         if (data.project.owner_id !== user.id) {
-          router.push(`/projects/${params.id}`);
+          router.push(`/${locale}/projects/${params.id}`);
           return;
         }
 
@@ -74,7 +81,7 @@ export default function EditProjectPage() {
         }
       } catch (error) {
         console.error("Error fetching project:", error);
-        router.push("/projects");
+        router.push(`/${locale}/projects`);
       } finally {
         setLoading(false);
       }
@@ -117,10 +124,11 @@ export default function EditProjectPage() {
 
       const { media } = await mediaRes.json();
       setGalleryImages([...galleryImages, media]);
-      alert("✅ Image added to gallery!");
+      showNotification("¡Imagen agregada a la galería!", "success");
     } catch (error) {
-      alert(
-        `❌ Failed to upload image: ${error instanceof Error ? error.message : "Unknown error"}`,
+      showNotification(
+        `Error al subir imagen: ${error instanceof Error ? error.message : "Error desconocido"}`,
+        "error"
       );
     } finally {
       setUploadingImage(false);
@@ -128,7 +136,12 @@ export default function EditProjectPage() {
   };
 
   const handleDeleteImage = async (mediaId: string) => {
-    if (!confirm("Are you sure you want to delete this image?")) return;
+    const confirmed = await showConfirm(
+      "Eliminar imagen",
+      "¿Estás seguro de que quieres eliminar esta imagen de la galería?",
+      { type: "danger", confirmText: "Eliminar", cancelText: "Cancelar" }
+    );
+    if (!confirmed) return;
 
     try {
       const res = await fetch(
@@ -144,10 +157,11 @@ export default function EditProjectPage() {
       }
 
       setGalleryImages(galleryImages.filter((img) => img.id !== mediaId));
-      alert("✅ Image deleted!");
+      showNotification("¡Imagen eliminada!", "success");
     } catch (error) {
-      alert(
-        `❌ Failed to delete image: ${error instanceof Error ? error.message : "Unknown error"}`,
+      showNotification(
+        `Error al eliminar imagen: ${error instanceof Error ? error.message : "Error desconocido"}`,
+        "error"
       );
     }
   };
@@ -177,7 +191,7 @@ export default function EditProjectPage() {
       if (res.ok) {
         setMessage({ type: "success", text: "¡Proyecto actualizado correctamente!" });
         setTimeout(() => {
-          router.push(`/projects/${params.id}`);
+          router.push(`/${locale}/projects/${params.id}`);
         }, 1500);
       } else {
         const error = await res.json();
@@ -209,8 +223,11 @@ export default function EditProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4">
+    <>
+      {ConfirmDialogComponent}
+      {NotificationContainer}
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-3xl mx-auto px-4">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -307,12 +324,13 @@ export default function EditProjectPage() {
           </div>
 
           {/* Category Card */}
-          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_#000]">
+          <div className={`bg-white border-4 ${!formData.category ? 'border-blue-500' : 'border-black'} p-6 shadow-[6px_6px_0px_#000]`}>
             <h2 className="text-xl font-bold mb-6 pb-4 border-b-4 border-black flex items-center gap-2">
-              <span className="w-8 h-8 bg-[#FDCB6E] border-2 border-black flex items-center justify-center text-sm font-bold">
+              <span className="w-8 h-8 bg-primary border-2 border-black flex items-center justify-center text-sm font-bold">
                 2
               </span>
               CATEGORÍA
+              {!formData.category && <span className="text-blue-600 text-sm ml-auto">💡 Recomendado</span>}
             </h2>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -368,19 +386,20 @@ export default function EditProjectPage() {
             </div>
 
             {/* Wallet Address */}
-            <div>
-              <label className="block font-bold text-sm mb-2 uppercase">
-                Wallet Stellar
+            <div className={`p-4 border-4 ${!formData.walletAddress ? 'border-red-500 bg-red-50' : 'border-black bg-white'}`}>
+              <label className="flex items-center gap-2 font-bold text-sm mb-2 uppercase">
+                <span>Wallet Stellar</span>
+                {!formData.walletAddress && <span className="text-red-600 text-xs">⚠️ OBLIGATORIO PARA PUBLICAR</span>}
               </label>
               <input
                 type="text"
                 value={formData.walletAddress}
                 onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
-                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-2 focus:ring-[#FDCB6E] font-mono text-sm"
+                className={`w-full px-4 py-3 border-4 ${!formData.walletAddress ? 'border-red-500' : 'border-black'} focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm`}
                 placeholder="GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
               />
-              <p className="text-xs text-gray-500 mt-2">
-                ⚠️ Requerida para recibir donaciones y publicar tu proyecto
+              <p className={`text-xs mt-2 ${!formData.walletAddress ? 'text-red-700 font-bold' : 'text-gray-500'}`}>
+                {!formData.walletAddress ? '⚠️ Sin wallet no puedes recibir donaciones ni publicar tu proyecto' : '✓ Wallet configurada correctamente'}
               </p>
             </div>
           </div>
@@ -401,6 +420,72 @@ export default function EditProjectPage() {
               </p>
             </div>
           )}
+
+          {/* Gallery Section */}
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_#000]">
+            <h2 className="text-xl font-bold mb-6 pb-4 border-b-4 border-black flex items-center gap-2">
+              <span className="w-8 h-8 bg-primary border-2 border-black flex items-center justify-center text-sm font-bold">
+                4
+              </span>
+              GALERÍA DEL PROYECTO
+            </h2>
+
+            {/* Upload Button */}
+            <div className="mb-6">
+              <label className="block font-bold text-sm mb-2 uppercase">
+                Agregar Imágenes a la Galería
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploadingImage}
+                className="hidden"
+                id="gallery-upload"
+              />
+              <label
+                htmlFor="gallery-upload"
+                className={`block w-full py-3 px-4 border-4 border-black text-center font-bold cursor-pointer transition-colors ${
+                  uploadingImage
+                    ? "bg-gray-200 cursor-not-allowed"
+                    : "bg-white hover:bg-gray-100"
+                }`}
+              >
+                {uploadingImage ? "📤 Subiendo..." : "📷 Subir Imagen"}
+              </label>
+              <p className="text-xs text-gray-500 mt-2">
+                Las imágenes de la galería ayudan a mostrar tu proyecto en acción
+              </p>
+            </div>
+
+            {/* Gallery Grid */}
+            {galleryImages.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {galleryImages.map((img) => (
+                  <div key={img.id} className="relative group">
+                    <img
+                      src={img.url}
+                      alt="Gallery"
+                      className="w-full h-32 object-cover border-4 border-black"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteImage(img.id)}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-2 border-2 border-black opacity-0 group-hover:opacity-100 transition-opacity font-bold text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 border-4 border-dashed border-gray-300">
+                <p className="text-gray-500 text-sm">
+                  📸 No hay imágenes en la galería aún
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
@@ -444,10 +529,14 @@ export default function EditProjectPage() {
             </p>
             <button
               type="button"
-              onClick={() => {
-                if (confirm("¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.")) {
-                  // TODO: Implement project deletion
-                  alert("Funcionalidad no implementada en el MVP");
+              onClick={async () => {
+                const confirmed = await showConfirm(
+                  "Eliminar proyecto",
+                  "¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.",
+                  { type: "danger", confirmText: "Eliminar", cancelText: "Cancelar" }
+                );
+                if (confirmed) {
+                  showNotification("Funcionalidad no implementada en el MVP", "info");
                 }
               }}
               className="px-4 py-2 border-2 border-red-500 text-red-600 font-bold text-sm hover:bg-red-50 transition-colors"
@@ -458,5 +547,6 @@ export default function EditProjectPage() {
         </motion.form>
       </div>
     </div>
+    </>
   );
 }

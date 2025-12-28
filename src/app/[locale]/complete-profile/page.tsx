@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import LoadingBee from "@/components/LoadingBee";
 import Logo from "@/components/Logo";
+import { useNotification } from "@/components/NotificationToast";
 
 const ROLES = [
   { id: "person", label: "Persona", icon: "👤", description: "Individuo que quiere apoyar proyectos" },
@@ -19,6 +20,7 @@ export default function CompleteProfilePage() {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const { showNotification, NotificationContainer } = useNotification();
   const [formData, setFormData] = useState({
     name: "",
     role: "person" as "person" | "startup" | "project" | "pyme",
@@ -77,7 +79,7 @@ export default function CompleteProfilePage() {
     e.preventDefault();
 
     if (!user) {
-      alert("No user found");
+      showNotification("Usuario no encontrado", "error");
       return;
     }
 
@@ -111,11 +113,13 @@ export default function CompleteProfilePage() {
         if (error) throw error;
       }
 
+      showNotification("¡Perfil completado exitosamente!", "success");
       router.push("/projects");
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Failed to update profile"}`,
+      showNotification(
+        `Error: ${error instanceof Error ? error.message : "Error al actualizar perfil"}`,
+        "error"
       );
     } finally {
       setLoading(false);
@@ -127,13 +131,9 @@ export default function CompleteProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDCB6E] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg"
-      >
-        {/* Logo */}
+    <>
+      {NotificationContainer}
+      <div className="min-h-screen bg-[#FDCB6E] flex items-center justify-center p-4">
         <div className="flex justify-center mb-8">
           <Logo size="lg" showText={true} animated={false} />
         </div>
@@ -240,7 +240,7 @@ export default function CompleteProfilePage() {
             </motion.button>
           </form>
         </motion.div>
-      </motion.div>
-    </div>
+      </div>
+    </>
   );
 }

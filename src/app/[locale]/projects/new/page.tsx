@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useNotification } from "@/components/NotificationToast";
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -18,6 +21,7 @@ export default function NewProjectPage() {
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const { showNotification, NotificationContainer } = useNotification();
   const [formData, setFormData] = useState({
     title: "",
     shortDescription: "",
@@ -31,7 +35,7 @@ export default function NewProjectPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        router.push(`/${locale}/login`);
       } else {
         setUserId(user.id);
       }
@@ -55,7 +59,7 @@ export default function NewProjectPage() {
 
   const handleGenerateCover = async () => {
     if (!formData.title || !formData.shortDescription) {
-      alert("Please fill in the title and short description first");
+      showNotification("Por favor completa el título y descripción corta primero", "warning");
       return;
     }
 
@@ -83,11 +87,13 @@ export default function NewProjectPage() {
       setCoverImagePreview(url);
       setUseGeneratedCover(true);
       setCoverImage(null);
+      showNotification("¡Portada generada exitosamente!", "success");
     } catch (error) {
-      alert(
+      showNotification(
         error instanceof Error
           ? error.message
-          : "Failed to generate cover image",
+          : "Error al generar portada",
+        "error"
       );
     } finally {
       setGenerating(false);
@@ -120,13 +126,13 @@ export default function NewProjectPage() {
     e.preventDefault();
 
     if (!userId) {
-      alert("You must be logged in to create a project");
-      router.push("/login");
+      showNotification("Debes iniciar sesión para crear un proyecto", "warning");
+      router.push(`/${locale}/login`);
       return;
     }
 
     if (!coverImage && !generatedCoverUrl) {
-      alert("Please select or generate a cover image");
+      showNotification("Por favor selecciona o genera una imagen de portada", "warning");
       return;
     }
 
@@ -203,14 +209,16 @@ export default function NewProjectPage() {
 
       if (res.ok) {
         const data = await res.json();
-        router.push(`/projects/${data.project.id}`);
+        showNotification("¡Proyecto creado exitosamente!", "success");
+        router.push(`/${locale}/projects/${data.project.id}/prepare`);
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error}`);
+        showNotification(`Error: ${error.error}`, "error");
       }
     } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Failed to create project",
+      showNotification(
+        error instanceof Error ? error.message : "Error al crear proyecto",
+        "error"
       );
     } finally {
       setLoading(false);
@@ -219,11 +227,13 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className="min-h-screen hex-pattern py-8">
+    <>
+      {NotificationContainer}
+      <div className="min-h-screen hex-pattern py-8">
       {/* Header */}
       <div className="bg-[#FDCB6E] border-b-4 border-black py-8 mb-8">
         <div className="max-w-3xl mx-auto px-4">
-          <Link href="/projects" className="inline-flex items-center gap-2 font-mono text-sm mb-4 hover:underline">
+          <Link href={`/${locale}/projects`} className="inline-flex items-center gap-2 font-mono text-sm mb-4 hover:underline">
             ← Volver a proyectos
           </Link>
           <h1 className="text-4xl font-bold">🐝 Crear Nuevo Proyecto</h1>
@@ -458,5 +468,6 @@ export default function NewProjectPage() {
         </motion.form>
       </div>
     </div>
+    </>
   );
 }

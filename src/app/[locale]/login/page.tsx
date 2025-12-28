@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useNotification } from "@/components/NotificationToast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { showNotification, NotificationContainer } = useNotification();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +25,9 @@ export default function LoginPage() {
     });
 
     if (error) {
-      alert(`Error: ${error.message}`);
+      showNotification(`Error: ${error.message}`, "error");
     } else {
+      showNotification("¡Inicio de sesión exitoso!", "success");
       router.push("/projects");
     }
 
@@ -51,13 +54,15 @@ export default function LoginPage() {
     });
 
     if (error) {
-      alert(`Error: ${error.message}`);
+      showNotification(`Error: ${error.message}`, "error");
       setGoogleLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen hex-pattern flex items-center justify-center p-4">
+    <>
+      {NotificationContainer}
+      <div className="min-h-screen hex-pattern flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -165,5 +170,6 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+    </>
   );
 }

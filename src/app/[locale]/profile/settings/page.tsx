@@ -6,6 +6,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import LoadingBee from "@/components/LoadingBee";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
+import { useNotification } from "@/components/NotificationToast";
 
 interface UserProfile {
   id: string;
@@ -22,6 +24,8 @@ export default function ProfileSettingsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [name, setName] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const { showConfirm, ConfirmDialogComponent } = useConfirmDialog();
+  const { showNotification, NotificationContainer } = useNotification();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -86,23 +90,26 @@ export default function ProfileSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <Link
-            href="/profile"
-            className="inline-flex items-center gap-2 text-sm font-bold hover:underline mb-4"
+    <>
+      {ConfirmDialogComponent}
+      {NotificationContainer}
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
           >
-            ← VOLVER AL PERFIL
-          </Link>
-          <h1 className="text-3xl font-bold">CONFIGURACIÓN</h1>
-          <p className="text-gray-500">Administra tu información personal</p>
-        </motion.div>
+            <Link
+              href="/profile"
+              className="inline-flex items-center gap-2 text-sm font-bold hover:underline mb-4"
+            >
+              ← VOLVER AL PERFIL
+            </Link>
+            <h1 className="text-3xl font-bold">CONFIGURACIÓN</h1>
+            <p className="text-gray-500">Administra tu información personal</p>
+          </motion.div>
 
         {/* Settings Form */}
         <motion.div
@@ -215,10 +222,14 @@ export default function ProfileSettingsPage() {
           </p>
           <button
             className="px-4 py-2 border-2 border-red-500 text-red-600 font-bold text-sm hover:bg-red-50 transition-colors"
-            onClick={() => {
-              if (confirm("¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.")) {
-                // TODO: Implement account deletion
-                alert("Funcionalidad no implementada en el MVP");
+            onClick={async () => {
+              const confirmed = await showConfirm(
+                "Eliminar cuenta",
+                "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.",
+                { type: "danger", confirmText: "Eliminar", cancelText: "Cancelar" }
+              );
+              if (confirmed) {
+                showNotification("Funcionalidad no implementada en el MVP", "info");
               }
             }}
           >
@@ -227,5 +238,6 @@ export default function ProfileSettingsPage() {
         </motion.div>
       </div>
     </div>
+    </>
   );
 }

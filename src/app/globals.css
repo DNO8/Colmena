@@ -2,12 +2,12 @@
 
 :root {
   /* Colmena - Neobrutalismo Abeja */
-  --color-primary: #FDCB6E;
-  --color-secondary: #E67E22;
+  --color-primary: #fdcb6e;
+  --color-secondary: #e67e22;
   --color-accent: #000000;
-  --color-background: #FFFFFF;
+  --color-background: #ffffff;
   --color-foreground: #000000;
-  
+
   /* Shadows & Borders */
   --shadow-brutal: 6px 6px 0px #000000;
   --shadow-brutal-sm: 4px 4px 0px #000000;
@@ -15,20 +15,20 @@
   --shadow-brutal-hover: 8px 8px 0px #000000;
   --border-brutal: 3px solid #000000;
   --border-brutal-thick: 4px solid #000000;
-  
+
   /* Fonts */
   --font-heading: var(--font-space-grotesk), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), monospace;
-  
+
   /* Spacing */
   --radius-brutal: 0px;
 }
 
 @theme inline {
-  --color-primary: #FDCB6E;
-  --color-secondary: #E67E22;
+  --color-primary: #fdcb6e;
+  --color-secondary: #e67e22;
   --color-accent: #000000;
-  --color-background: #FFFFFF;
+  --color-background: #ffffff;
   --color-foreground: #000000;
   --font-sans: var(--font-space-grotesk);
   --font-mono: var(--font-jetbrains-mono);
@@ -79,7 +79,7 @@ body {
 
 .btn-brutal-secondary {
   background: var(--color-secondary);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .btn-brutal-outline {
@@ -89,7 +89,7 @@ body {
 
 .btn-brutal-dark {
   background: var(--color-accent);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 /* Brutalist Card */
@@ -142,19 +142,88 @@ body {
 
 .badge-brutal-secondary {
   background: var(--color-secondary);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
-/* Masonry Grid */
+/* Masonry Grid - Pinterest Style */
 .masonry-grid {
-  display: columns;
-  columns: 3 320px;
-  column-gap: 24px;
+  column-count: 1;
+  column-gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .masonry-grid {
+    column-count: 2;
+    column-gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid {
+    column-count: 3;
+    column-gap: 24px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .masonry-grid {
+    column-count: 4;
+    column-gap: 28px;
+  }
 }
 
 .masonry-item {
   break-inside: avoid;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  display: inline-block;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .masonry-item {
+    margin-bottom: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-item {
+    margin-bottom: 24px;
+  }
+}
+
+/* Pinterest Card Styles */
+.pinterest-card {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.pinterest-card:hover {
+  transform: translateY(-4px);
+}
+
+.pinterest-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Badge Brutal Styles */
+.badge-brutal {
+  display: inline-block;
+  padding: 4px 8px;
+  font-weight: bold;
+  border: 2px solid #000;
+  background: #fff;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.badge-brutal-primary {
+  background: #fdcb6e;
+}
+
+.badge-brutal-secondary {
+  background: #e8e8e8;
 }
 
 /* Hexagon Pattern Background */
@@ -163,7 +232,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
@@ -175,13 +249,39 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: var(--shadow-brutal), 0 0 0 0 rgba(253, 203, 110, 0.4); }
-  50% { box-shadow: var(--shadow-brutal), 0 0 20px 10px rgba(253, 203, 110, 0.2); }
+  0%,
+  100% {
+    box-shadow:
+      var(--shadow-brutal),
+      0 0 0 0 rgba(253, 203, 110, 0.4);
+  }
+  50% {
+    box-shadow:
+      var(--shadow-brutal),
+      0 0 20px 10px rgba(253, 203, 110, 0.2);
+  }
+}
+
+@keyframes gradient-wave {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .animate-float {
