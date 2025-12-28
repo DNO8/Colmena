@@ -1,4 +1,20 @@
 {
+  "home": {
+    "heroTitle": "Financia el Futuro",
+    "heroSubtitle": "Apoya proyectos que importan con donaciones transparentes en blockchain",
+    "exploreProjects": "Explorar Proyectos",
+    "createProject": "Crear Proyecto",
+    "featuresTitle": "¿Por qué Colmena?",
+    "feature1Title": "100% Transparente",
+    "feature1Desc": "Cada donación queda registrada en Stellar. Sin intermediarios, sin sorpresas.",
+    "feature2Title": "Fees Mínimos",
+    "feature2Desc": "Stellar permite transacciones casi gratuitas. Más dinero llega a los proyectos.",
+    "feature3Title": "Global & Rápido",
+    "feature3Desc": "Dona desde cualquier parte del mundo. Las transacciones se confirman en segundos.",
+    "ctaTitle": "¿Listo para generar impacto?",
+    "ctaSubtitle": "Únete a la colmena y comienza a apoyar proyectos que transforman comunidades.",
+    "ctaButton": "Comenzar Ahora"
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Error",
@@ -87,8 +103,6 @@
     "draft": "Borrador",
     "published": "Publicado",
     "paused": "Pausado",
-    "publish": "Publicar",
-    "unpublish": "Despublicar",
     "coverImage": "Imagen de Portada",
     "generateCover": "Generar Portada con IA",
     "generating": "Generando...",
@@ -103,7 +117,6 @@
     "fundUsage": "Uso de Fondos",
     "addFundUsage": "Agregar Uso de Fondos",
     "percentage": "Porcentaje",
-    "description": "Descripción",
     "creating": "Creando...",
     "updating": "Actualizando...",
     "selectOrGenerateCover": "Por favor selecciona o genera una imagen de portada",
