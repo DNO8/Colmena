@@ -5,6 +5,18 @@ import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
+import { supabase } from "@/lib/supabase/client";
+
+interface Project {
+  id: string;
+  title: string;
+  short_description: string;
+  cover_image_url: string;
+  current_amount: number;
+  goal_amount: number;
+  category: string | null;
+  status: string;
+}
 
 const CATEGORIES = [
   { id: "all", label: "Todos", icon: "🌐" },
@@ -16,88 +28,86 @@ const CATEGORIES = [
   { id: "health", label: "Salud", icon: "🏥" },
 ];
 
-const FEATURED_PROJECTS = [
-  {
-    id: 1,
-    title: "Huerto Comunitario La Esperanza",
-    description: "Agricultura urbana para familias vulnerables",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop",
-    raised: 1250,
-    goal: 2000,
-    category: "environment",
-  },
-  {
-    id: 2,
-    title: "Energía Solar para Escuelas Rurales",
-    description: "Paneles solares para 5 escuelas sin electricidad",
-    image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop",
-    raised: 3400,
-    goal: 5000,
-    category: "education",
-  },
-  {
-    id: 3,
-    title: "Agua Limpia para San Marcos",
-    description: "Sistema de filtración para comunidad rural",
-    image: "https://images.unsplash.com/photo-1541544537156-7627a7a4aa1c?w=400&h=300&fit=crop",
-    raised: 890,
-    goal: 1500,
-    category: "social",
-  },
-  {
-    id: 4,
-    title: "Escuela de Código para Jóvenes",
-    description: "Bootcamp gratuito de programación",
-    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=300&fit=crop",
-    raised: 2100,
-    goal: 3000,
-    category: "tech",
-  },
-  {
-    id: 5,
-    title: "Biblioteca Móvil Itinerante",
-    description: "Llevando libros a zonas sin acceso",
-    image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop",
-    raised: 1800,
-    goal: 2500,
-    category: "education",
-  },
-  {
-    id: 6,
-    title: "Taller de Artesanías Tradicionales",
-    description: "Preservando técnicas ancestrales",
-    image: "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=400&h=300&fit=crop",
-    raised: 650,
-    goal: 1000,
-    category: "art",
-  },
-];
-
 const MILESTONES = [
-  { title: "PRIMEROS PASOS", progress: 100, amount: "$50K", color: "bg-[#FDCB6E]" },
-  { title: "CRECIMIENTO SOSTENIDO", progress: 75, amount: "$150K", color: "bg-[#E67E22]" },
-  { title: "EXPANSIÓN REGIONAL", progress: 40, amount: "$500K", color: "bg-[#FDCB6E]" },
-  { title: "ESCALA CONTINENTAL", progress: 10, amount: "$2M", color: "bg-[#E67E22]" },
+  {
+    title: "PRIMEROS PASOS",
+    progress: 100,
+    amount: "$50K",
+    color: "bg-[#FDCB6E]",
+  },
+  {
+    title: "CRECIMIENTO SOSTENIDO",
+    progress: 75,
+    amount: "$150K",
+    color: "bg-[#E67E22]",
+  },
+  {
+    title: "EXPANSIÓN REGIONAL",
+    progress: 40,
+    amount: "$500K",
+    color: "bg-[#FDCB6E]",
+  },
+  {
+    title: "ESCALA CONTINENTAL",
+    progress: 10,
+    amount: "$2M",
+    color: "bg-[#E67E22]",
+  },
 ];
 
 export default function Home() {
   const t = useTranslations("home");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [filteredProjects, setFilteredProjects] = useState(FEATURED_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch projects from Supabase
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data } = await supabase
+          .from("projects")
+          .select(
+            "id, title, short_description, cover_image_url, current_amount, goal_amount, category, status",
+          )
+          .eq("status", "published")
+          .order("created_at", { ascending: false })
+          .limit(6);
+
+        if (data) {
+          setProjects(data as Project[]);
+          setFilteredProjects(data as Project[]);
+        }
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  // Filter projects by category
   useEffect(() => {
     if (selectedCategory === "all") {
-      setFilteredProjects(FEATURED_PROJECTS);
+      setFilteredProjects(projects);
     } else {
-      setFilteredProjects(FEATURED_PROJECTS.filter(p => p.category === selectedCategory));
+      setFilteredProjects(
+        projects.filter((p) => p.category === selectedCategory),
+      );
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, projects]);
 
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="relative bg-[#FDCB6E] border-b-4 border-black overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 py-16 lg:py-24">
+        {/* Honeycomb Pattern Overlay */}
+        <div className="absolute inset-0 hex-pattern-white opacity-30 pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 py-16 lg:py-24">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -130,7 +140,8 @@ export default function Home() {
             transition={{ delay: 0.3 }}
             className="text-center text-lg md:text-xl text-black/70 max-w-2xl mx-auto mb-10"
           >
-            Crowdfunding transparente con la tecnología blockchain. Cada donación verificable, sin intermediarios, sin fronteras.
+            Crowdfunding transparente con la tecnología blockchain. Cada
+            donación verificable, sin intermediarios, sin fronteras.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -140,10 +151,16 @@ export default function Home() {
             transition={{ delay: 0.4 }}
             className="flex flex-wrap justify-center gap-4 mb-16"
           >
-            <Link href="/projects" className="btn-brutal btn-brutal-dark text-lg">
+            <Link
+              href="/projects"
+              className="btn-brutal btn-brutal-dark text-lg"
+            >
               EXPLORAR PROYECTOS →
             </Link>
-            <Link href="/projects/new" className="btn-brutal btn-brutal-outline text-lg bg-white">
+            <Link
+              href="/projects/new"
+              className="btn-brutal btn-brutal-outline text-lg bg-white"
+            >
               CREAR PROYECTO
             </Link>
           </motion.div>
@@ -182,8 +199,7 @@ export default function Home() {
             className="mb-10"
           >
             <h2 className="text-4xl md:text-5xl font-bold">
-              IMPULSA EL{" "}
-              <span className="text-[#E67E22]">CAMBIO</span>
+              IMPULSA EL <span className="text-[#E67E22]">CAMBIO</span>
             </h2>
           </motion.div>
 
@@ -211,7 +227,8 @@ export default function Home() {
 
           {/* Subtitle */}
           <p className="text-gray-600 mb-8 max-w-2xl">
-            Descubre proyectos que están transformando comunidades. Cada donación cuenta, cada peso genera impacto real.
+            Descubre proyectos que están transformando comunidades. Cada
+            donación cuenta, cada peso genera impacto real.
           </p>
 
           {/* Projects Grid */}
@@ -243,7 +260,8 @@ export default function Home() {
               CERO <span className="text-[#E67E22]">FRICCIÓN</span>
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              En pocos clicks tu donación llega directamente al proyecto. Sin intermediarios, sin comisiones ocultas.
+              En pocos clicks tu donación llega directamente al proyecto. Sin
+              intermediarios, sin comisiones ocultas.
             </p>
           </motion.div>
 
@@ -304,11 +322,11 @@ export default function Home() {
               🎯 ROADMAP 2025
             </span>
             <h2 className="text-4xl md:text-5xl font-bold">
-              HITOS DE{" "}
-              <span className="text-[#E67E22]">IMPACTO</span>
+              HITOS DE <span className="text-[#E67E22]">IMPACTO</span>
             </h2>
             <p className="text-black/70 mt-4 max-w-xl mx-auto">
-              Los hitos que estamos alcanzando juntos. Cada meta cumplida es un paso hacia un ecosistema más justo.
+              Los hitos que estamos alcanzando juntos. Cada meta cumplida es un
+              paso hacia un ecosistema más justo.
             </p>
           </motion.div>
 
@@ -338,27 +356,63 @@ export default function Home() {
             <div>
               <h4 className="font-bold mb-4 text-[#FDCB6E]">PLATAFORMA</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/projects" className="hover:text-white">Explorar Proyectos</Link></li>
-                <li><Link href="/projects/new" className="hover:text-white">Crear Proyecto</Link></li>
-                <li><Link href="/my-projects" className="hover:text-white">Mis Proyectos</Link></li>
+                <li>
+                  <Link href="/projects" className="hover:text-white">
+                    Explorar Proyectos
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/projects/new" className="hover:text-white">
+                    Crear Proyecto
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/my-projects" className="hover:text-white">
+                    Mis Proyectos
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold mb-4 text-[#FDCB6E]">RECURSOS</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Documentación</a></li>
-                <li><a href="#" className="hover:text-white">API</a></li>
-                <li><a href="#" className="hover:text-white">Soporte</a></li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Documentación
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    API
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Soporte
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold mb-4 text-[#FDCB6E]">LEGAL</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Términos de Uso</a></li>
-                <li><a href="#" className="hover:text-white">Privacidad</a></li>
-                <li><a href="#" className="hover:text-white">Cookies</a></li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Términos de Uso
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Privacidad
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Cookies
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -383,7 +437,15 @@ export default function Home() {
   );
 }
 
-function StatCard({ value, label, icon }: { value: string; label: string; icon: string }) {
+function StatCard({
+  value,
+  label,
+  icon,
+}: {
+  value: string;
+  label: string;
+  icon: string;
+}) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
@@ -400,53 +462,68 @@ function StatCard({ value, label, icon }: { value: string; label: string; icon: 
   );
 }
 
-function ProjectCard({ project, index }: { project: typeof FEATURED_PROJECTS[0]; index: number }) {
-  const progress = Math.round((project.raised / project.goal) * 100);
-  
+function ProjectCard({ project, index }: { project: Project; index: number }) {
+  const raised = Number(project.current_amount) || 0;
+  const goal = Number(project.goal_amount) || 1;
+  const progress = Math.round((raised / goal) * 100);
+  const category = CATEGORIES.find((c) => c.id === project.category);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
-      whileHover={{ y: -6 }}
-      className="bg-white border-4 border-black shadow-[6px_6px_0px_#000] overflow-hidden group"
-    >
-      <div className="relative h-48 overflow-hidden">
-        <img
-          src={project.image}
-          alt={project.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute top-3 left-3">
-          <span className="px-2 py-1 bg-[#FDCB6E] text-black text-xs font-bold border-2 border-black">
-            {CATEGORIES.find(c => c.id === project.category)?.icon} {CATEGORIES.find(c => c.id === project.category)?.label}
-          </span>
+    <Link href={`/projects/${project.id}`}>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: index * 0.1 }}
+        whileHover={{ y: -6 }}
+        className="bg-white border-4 border-black shadow-[6px_6px_0px_#000] overflow-hidden group cursor-pointer"
+      >
+        <div className="relative h-48 overflow-hidden">
+          <img
+            src={project.cover_image_url}
+            alt={project.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          {category && (
+            <div className="absolute top-3 left-3">
+              <span className="px-2 py-1 bg-[#FDCB6E] text-black text-xs font-bold border-2 border-black">
+                {category.icon} {category.label}
+              </span>
+            </div>
+          )}
         </div>
-      </div>
-      <div className="p-4">
-        <h3 className="font-bold text-lg mb-1 line-clamp-1">{project.title}</h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
-        
-        {/* Progress Bar */}
-        <div className="mb-3">
-          <div className="h-3 bg-gray-200 border-2 border-black">
-            <div
-              className="h-full bg-[#FDCB6E]"
-              style={{ width: `${Math.min(progress, 100)}%` }}
-            />
+        <div className="p-4">
+          <h3 className="font-bold text-lg mb-1 line-clamp-1">
+            {project.title}
+          </h3>
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+            {project.short_description}
+          </p>
+
+          {/* Progress Bar */}
+          <div className="mb-3">
+            <div className="h-3 bg-gray-200 border-2 border-black">
+              <div
+                className="h-full bg-[#FDCB6E]"
+                style={{ width: `${Math.min(progress, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-bold text-[#E67E22]">
+                ${raised.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500">
+                de ${goal.toLocaleString()}
+              </p>
+            </div>
+            <span className="font-mono text-sm font-bold">{progress}%</span>
           </div>
         </div>
-        
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="font-bold text-[#E67E22]">${project.raised.toLocaleString()}</p>
-            <p className="text-xs text-gray-500">de ${project.goal.toLocaleString()}</p>
-          </div>
-          <span className="font-mono text-sm font-bold">{progress}%</span>
-        </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 }
 
@@ -481,7 +558,13 @@ function ProcessStep({
   );
 }
 
-function MilestoneBar({ milestone, index }: { milestone: typeof MILESTONES[0]; index: number }) {
+function MilestoneBar({
+  milestone,
+  index,
+}: {
+  milestone: (typeof MILESTONES)[0];
+  index: number;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -30 }}
@@ -492,7 +575,9 @@ function MilestoneBar({ milestone, index }: { milestone: typeof MILESTONES[0]; i
     >
       <div className="flex justify-between items-center mb-2">
         <h4 className="font-bold">{milestone.title}</h4>
-        <span className="font-mono font-bold text-[#E67E22]">{milestone.amount}</span>
+        <span className="font-mono font-bold text-[#E67E22]">
+          {milestone.amount}
+        </span>
       </div>
       <div className="h-4 bg-gray-200 border-2 border-black">
         <motion.div
@@ -503,7 +588,9 @@ function MilestoneBar({ milestone, index }: { milestone: typeof MILESTONES[0]; i
           className={`h-full ${milestone.color}`}
         />
       </div>
-      <p className="text-right text-xs font-mono text-gray-500 mt-1">{milestone.progress}%</p>
+      <p className="text-right text-xs font-mono text-gray-500 mt-1">
+        {milestone.progress}%
+      </p>
     </motion.div>
   );
 }
