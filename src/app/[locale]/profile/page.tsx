@@ -49,8 +49,10 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+
         if (!authUser) {
           router.push("/login");
           return;
@@ -61,7 +63,7 @@ export default function ProfilePage() {
           .from("users")
           .select("*")
           .eq("id", authUser.id)
-          .single();
+          .single<UserProfile>();
 
         if (profile) {
           setUser(profile);
@@ -70,7 +72,9 @@ export default function ProfilePage() {
         // Fetch user's projects
         const { data: userProjects } = await supabase
           .from("projects")
-          .select("id, title, short_description, cover_image_url, status, current_amount, goal_amount")
+          .select(
+            "id, title, short_description, cover_image_url, status, current_amount, goal_amount",
+          )
           .eq("owner_id", authUser.id)
           .order("created_at", { ascending: false });
 
@@ -94,8 +98,11 @@ export default function ProfilePage() {
             .limit(10);
 
           if (userDonations) {
-            setDonations(userDonations as any);
-            const total = userDonations.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+            setDonations(userDonations as Donation[]);
+            const total = (userDonations as Donation[]).reduce(
+              (sum, d) => sum + parseFloat(d.amount),
+              0,
+            );
             setTotalDonated(total);
           }
         }
@@ -135,14 +142,26 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               {/* Avatar */}
               <div className="w-16 h-16 bg-[#FDCB6E] border-4 border-black flex items-center justify-center">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
               </div>
-              
+
               {/* User Info */}
               <div>
-                <h1 className="text-2xl font-bold">{user.name || user.email.split("@")[0]}</h1>
+                <h1 className="text-2xl font-bold">
+                  {user.name || user.email.split("@")[0]}
+                </h1>
                 <p className="text-gray-500 font-mono text-sm">{user.email}</p>
               </div>
             </div>
@@ -175,8 +194,18 @@ export default function ProfilePage() {
           >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-[#FDCB6E] border-3 border-black flex items-center justify-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                  />
                 </svg>
               </div>
               <div>
@@ -194,8 +223,18 @@ export default function ProfilePage() {
           >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white border-3 border-black flex items-center justify-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
                 </svg>
               </div>
               <div>
@@ -238,8 +277,18 @@ export default function ProfilePage() {
             {projects.length === 0 ? (
               <div className="bg-white border-4 border-black p-8 shadow-[6px_6px_0px_#000] text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 border-3 border-black flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  <svg
+                    className="w-8 h-8 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    />
                   </svg>
                 </div>
                 <h3 className="font-bold text-lg mb-2">Sin proyectos</h3>
@@ -268,13 +317,23 @@ export default function ProfilePage() {
                         className="w-20 h-20 object-cover border-2 border-black"
                       />
                       <div className="flex-1">
-                        <h3 className="font-bold line-clamp-1">{project.title}</h3>
-                        <p className="text-sm text-gray-500 line-clamp-1">{project.short_description}</p>
+                        <h3 className="font-bold line-clamp-1">
+                          {project.title}
+                        </h3>
+                        <p className="text-sm text-gray-500 line-clamp-1">
+                          {project.short_description}
+                        </p>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className={`px-2 py-0.5 text-xs font-bold border-2 border-black ${
-                            project.status === "published" ? "bg-green-200" : "bg-gray-200"
-                          }`}>
-                            {project.status === "published" ? "PUBLICADO" : "BORRADOR"}
+                          <span
+                            className={`px-2 py-0.5 text-xs font-bold border-2 border-black ${
+                              project.status === "published"
+                                ? "bg-green-200"
+                                : "bg-gray-200"
+                            }`}
+                          >
+                            {project.status === "published"
+                              ? "PUBLICADO"
+                              : "BORRADOR"}
                           </span>
                           <span className="text-sm font-mono text-[#E67E22]">
                             ${project.current_amount || 0}
@@ -315,8 +374,18 @@ export default function ProfilePage() {
             {donations.length === 0 ? (
               <div className="bg-[#FDCB6E] border-4 border-black p-8 shadow-[6px_6px_0px_#000] text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-white border-3 border-black flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  <svg
+                    className="w-8 h-8 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
                   </svg>
                 </div>
                 <h3 className="font-bold text-lg mb-2">Sin donaciones</h3>
@@ -340,7 +409,8 @@ export default function ProfilePage() {
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-bold text-[#E67E22]">
-                          {parseFloat(donation.amount).toFixed(2)} {donation.asset}
+                          {parseFloat(donation.amount).toFixed(2)}{" "}
+                          {donation.asset}
                         </p>
                         <p className="text-sm text-gray-500">
                           {donation.project?.title || "Proyecto"}
@@ -367,27 +437,55 @@ export default function ProfilePage() {
                 <Logo size="md" showText={true} animated={false} />
               </div>
               <p className="text-gray-400 text-sm">
-                Crowdfunding transparente impulsado por blockchain.
-                Cada transacción es verificable, cada peso genera impacto real.
+                Crowdfunding transparente impulsado por blockchain. Cada
+                transacción es verificable, cada peso genera impacto real.
               </p>
             </div>
 
             <div>
               <h4 className="font-bold mb-4">PLATAFORMA</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/projects" className="hover:text-white">Explorar Proyectos</Link></li>
-                <li><Link href="/projects/new" className="hover:text-white">Crear Proyecto</Link></li>
-                <li><a href="#" className="hover:text-white">Cómo Funciona</a></li>
-                <li><a href="#" className="hover:text-white">Preguntas Frecuentes</a></li>
+                <li>
+                  <Link href="/projects" className="hover:text-white">
+                    Explorar Proyectos
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/projects/new" className="hover:text-white">
+                    Crear Proyecto
+                  </Link>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Cómo Funciona
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Preguntas Frecuentes
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold mb-4">LEGAL</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Términos de Uso</a></li>
-                <li><a href="#" className="hover:text-white">Privacidad</a></li>
-                <li><a href="#" className="hover:text-white">Cookies</a></li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Términos de Uso
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Privacidad
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Cookies
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -397,13 +495,22 @@ export default function ProfilePage() {
               © 2024 Colmena. Todos los derechos reservados.
             </p>
             <div className="flex gap-3">
-              <a href="#" className="w-10 h-10 border border-gray-700 flex items-center justify-center hover:border-white transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 border border-gray-700 flex items-center justify-center hover:border-white transition-colors"
+              >
                 <span>𝕏</span>
               </a>
-              <a href="#" className="w-10 h-10 border border-gray-700 flex items-center justify-center hover:border-white transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 border border-gray-700 flex items-center justify-center hover:border-white transition-colors"
+              >
                 <span>📱</span>
               </a>
-              <a href="#" className="w-10 h-10 border border-gray-700 flex items-center justify-center hover:border-white transition-colors">
+              <a
+                href="#"
+                className="w-10 h-10 border border-gray-700 flex items-center justify-center hover:border-white transition-colors"
+              >
                 <span>✉️</span>
               </a>
             </div>
