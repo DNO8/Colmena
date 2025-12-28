@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -7,21 +7,24 @@ import { locales } from "@/i18n/config";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import { WalletProvider } from "@/lib/hooks/WalletProvider";
+import { ToastProvider } from "@/components/Toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "VERITAS - Plataforma de Crowdfunding Transparente",
+  title: "Colmena - Protocolo de Transparencia Programada",
   description:
-    "Plataforma descentralizada de donaciones construida sobre Stellar",
+    "Crowdfunding social y creativo sobre Stellar. Donaciones transparentes, impacto verificable.",
 };
 
 export default async function LocaleLayout({
@@ -45,13 +48,15 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <NextIntlClientProvider messages={messages}>
-          <WalletProvider>
-            <Navbar />
-            {children}
-          </WalletProvider>
+          <ToastProvider>
+            <WalletProvider>
+              <Navbar />
+              {children}
+            </WalletProvider>
+          </ToastProvider>
         </NextIntlClientProvider>
       </body>
     </html>
