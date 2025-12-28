@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Project } from "@/lib/supabase/types";
 import { useTranslations } from "next-intl";
+
+// Predefined height variations for masonry effect
+const HEIGHT_VARIANTS = [220, 280, 320, 380, 260, 340, 200, 300];
 
 interface ProjectCardProps {
   project: Project;
@@ -17,7 +20,18 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const params = useParams();
   const locale = params.locale as string;
   const [showOverlay, setShowOverlay] = useState(false);
-  const [imageHeight, setImageHeight] = useState(300);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Generate consistent height based on project ID for varied masonry look
+  const baseHeight = useMemo(() => {
+    // Use project ID to generate a consistent but varied height
+    const hash = project.id
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return HEIGHT_VARIANTS[hash % HEIGHT_VARIANTS.length];
+  }, [project.id]);
+
+  const [imageHeight, setImageHeight] = useState(baseHeight);
 
   const progress = project.goal_amount
     ? Math.min(
@@ -28,11 +42,16 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
-    const aspectRatio = img.naturalHeight / img.naturalWidth;
+    const naturalRatio = img.naturalHeight / img.naturalWidth;
     const width = 400;
-    const calculatedHeight = Math.round(width * aspectRatio);
-    // Limitar altura mínima y máxima para mejor aspecto en móvil
-    setImageHeight(Math.min(Math.max(calculatedHeight, 150), 450));
+
+    // Blend natural aspect ratio with base height for more organic variation
+    const naturalHeight = Math.round(width * naturalRatio);
+    const blendedHeight = Math.round(naturalHeight * 0.6 + baseHeight * 0.4);
+
+    // Clamp between min and max
+    setImageHeight(Math.min(Math.max(blendedHeight, 180), 420));
+    setImageLoaded(true);
   };
 
   const handleCardClick = () => {
