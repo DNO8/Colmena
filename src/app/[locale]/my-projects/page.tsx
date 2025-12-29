@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import LoadingBee from "@/components/LoadingBee";
 import { useNotification } from "@/components/NotificationToast";
+import { useConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function MyProjectsPage() {
   const t = useTranslations("projects");
@@ -17,6 +18,7 @@ export default function MyProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const { showNotification, NotificationContainer } = useNotification();
+  const { showConfirm, ConfirmDialogComponent } = useConfirmDialog();
 
   useEffect(() => {
     const fetchUserProjects = async () => {
@@ -100,6 +102,39 @@ export default function MyProjectsPage() {
     }
   };
 
+  const handleDelete = async (projectId: string) => {
+    const confirmed = await showConfirm(
+      "Eliminar proyecto",
+      "¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer y se eliminarán todos los datos asociados (galería, roadmap, donaciones).",
+      {
+        confirmText: "Eliminar",
+        cancelText: "Cancelar",
+        type: "danger",
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        setProjects((prev) => prev.filter((p) => p.id !== projectId));
+        showNotification("Proyecto eliminado exitosamente", "success");
+      } else {
+        const errorData = await res.json();
+        showNotification(`Error: ${errorData.error || "Error al eliminar proyecto"}`, "error");
+      }
+    } catch (error) {
+      showNotification("Error al eliminar proyecto", "error");
+    }
+  };
+
   if (loading) {
     return <LoadingBee text="Cargando proyectos..." />;
   }
@@ -107,6 +142,7 @@ export default function MyProjectsPage() {
   return (
     <>
       {NotificationContainer}
+      {ConfirmDialogComponent}
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
@@ -256,6 +292,13 @@ export default function MyProjectsPage() {
                         PAUSAR
                       </button>
                     ) : null}
+                    <button
+                      onClick={() => handleDelete(project.id)}
+                      className="py-2 px-3 bg-red-500 text-white text-sm font-bold border-2 border-black hover:bg-red-600"
+                      title="Eliminar proyecto"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               </motion.div>

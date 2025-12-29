@@ -184,3 +184,63 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    // 🔒 SECURITY: Verificar autenticación
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized - Authentication required" },
+        { status: 401 },
+      );
+    }
+
+    const { id } = await params;
+
+    // 🔒 SECURITY: Verificar ownership del proyecto
+    const existingProject = await getProjectById(id);
+
+    if (!existingProject) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    if (existingProject.owner_id !== user.id) {
+      return NextResponse.json(
+        { error: "Forbidden - You can only delete your own projects" },
+        { status: 403 },
+      );
+    }
+
+    // Eliminar proyecto (las tablas relacionadas se eliminan por CASCADE)
+    const { error: deleteError } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      throw new Error(`Failed to delete project: ${deleteError.message}`);
+    }
+
+    return NextResponse.json(
+      { success: true, message: "Project deleted successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to delete project",
+      },
+      { status: 500 },
+    );
+  }
+}
