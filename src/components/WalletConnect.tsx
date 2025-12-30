@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useWallet } from "@/lib/hooks/WalletProvider";
 import WalletSelector from "./WalletSelector";
+import WalletDebugger from "./WalletDebugger";
+import { WalletType } from "@/lib/stellar/wallet-types";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function WalletConnect() {
@@ -66,6 +68,7 @@ export default function WalletConnect() {
   if (!isConnected) {
     return (
       <div className="mb-4">
+        <WalletDebugger />
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

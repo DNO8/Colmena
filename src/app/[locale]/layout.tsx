@@ -7,6 +7,7 @@ import { locales } from "@/i18n/config";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import { WalletProvider } from "@/lib/hooks/WalletProvider";
+import { SessionManager } from "@/components/SessionManager";
 import { ToastProvider } from "@/components/Toast";
 
 const spaceGrotesk = Space_Grotesk({
@@ -53,6 +54,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <ToastProvider>
             <WalletProvider>
+              <SessionManager />
               <Navbar />
               {children}
             </WalletProvider>
