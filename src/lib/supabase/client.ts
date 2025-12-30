@@ -20,7 +20,7 @@ export const supabase = createBrowserClient<Database>(
     },
     global: {
       headers: {
-        "x-application-name": "veritas",
+        "x-application-name": "colmena",
       },
     },
   },

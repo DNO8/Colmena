@@ -286,8 +286,8 @@ const supportedAssets = ['XLM', 'USDC'];
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/veritas.git
-cd veritas
+git clone https://github.com/TU_USUARIO/colmena.git
+cd colmena
 ```
 
 ### 2. Instalar Dependencias
@@ -365,7 +365,7 @@ pnpm test:stellar
 ## 🏗️ Estructura del Proyecto
 
 ```
-veritas/
+colmena/
 ├── src/
 │   ├── app/                    # Páginas de Next.js App Router
 │   │   ├── api/               # Rutas API
@@ -432,7 +432,7 @@ veritas/
 
 ### ⚠️ Sin Smart Contracts (MVP)
 
-**VERITAS NO utiliza smart contracts** en su versión actual. Las donaciones funcionan mediante **transacciones nativas de Stellar** (peer-to-peer).
+**Colmena NO utiliza smart contracts** en su versión actual. Las donaciones funcionan mediante **transacciones nativas de Stellar** (peer-to-peer).
 
 ### Flujo de Donación Completo
 
@@ -566,7 +566,7 @@ async createDonation(input) {
 
 ### 🔐 Seguridad
 
-- ✅ **No custodial** - VERITAS nunca tiene acceso a los fondos
+- ✅ **No custodial** - Colmena nunca tiene acceso a los fondos
 - ✅ **Verificación on-chain** - Cada donación se verifica en Stellar
 - ✅ **Prevención de duplicados** - Se verifica que el tx_hash no exista
 - ✅ **Validación de wallets** - Se valida formato de direcciones Stellar
@@ -597,10 +597,10 @@ Wallet Donante → Red Stellar → Wallet Proyecto
                       ↓
                Hash de Transacción
                       ↓
-          Base de Datos VERITAS (registro de auditoría)
+          Base de Datos Colmena (registro de auditoría)
 ```
 
-**VERITAS nunca custodia fondos** - todas las transacciones son peer-to-peer.
+**Colmena nunca custodia fondos** - todas las transacciones son peer-to-peer.
 
 ---
 
@@ -615,8 +615,8 @@ Haz clic en el botón **Fork** en la parte superior derecha de esta página.
 ### 2. Clonar tu Fork
 
 ```bash
-git clone https://github.com/TU_USUARIO/veritas.git
-cd veritas
+git clone https://github.com/TU_USUARIO/colmena.git
+cd colmena
 ```
 
 ### 3. Crear una Rama
@@ -1030,7 +1030,7 @@ Este proyecto es open source y está disponible bajo la [Licencia MIT](LICENSE).
 
 - **GitHub Issues** - Para bugs y solicitudes de características
 - **Discussions** - Para preguntas e ideas
-- **Twitter** - [@veritas_stellar](#)
+- **Twitter** - [@colmena_stellar](#)
 
 ---
 
@@ -1038,7 +1038,7 @@ Este proyecto es open source y está disponible bajo la [Licencia MIT](LICENSE).
 
 **Construido con ❤️ para Stellar Ideathon 2026**
 
-[⭐ Dale estrella a este repo](https://github.com/TU_USUARIO/veritas) • [🐛 Reportar Bug](https://github.com/TU_USUARIO/veritas/issues) • [💡 Solicitar Característica](https://github.com/TU_USUARIO/veritas/issues)
+[⭐ Dale estrella a este repo](https://github.com/DNO8/Colmena) • [🐛 Reportar Bug](https://github.com/DNO8/Colmena/issues) • [💡 Solicitar Característica](https://github.com/DNO8/Colmena/issues)
 
 </div>
 
@@ -1050,7 +1050,7 @@ Este proyecto es open source y está disponible bajo la [Licencia MIT](LICENSE).
 
 <div align="center">
 
-# 🌟 VERITAS
+# 🐝 Colmena Crowdfunding
 
 ### Transparent Crowdfunding Platform Built on Stellar
 
@@ -1069,7 +1069,7 @@ Este proyecto es open source y está disponible bajo la [Licencia MIT](LICENSE).
 
 ## 📖 About
 
-**VERITAS** is a decentralized crowdfunding platform that empowers **projects, startups, SMEs, and individuals** to receive transparent donations using the **Stellar blockchain**. Built for the [Stellar Ideathon 2026](https://dorahacks.io/hackathon/ideaton2026/detail), VERITAS combines Web2 accessibility with Web3 transparency.
+**Colmena** is a decentralized crowdfunding platform that empowers **projects, startups, SMEs, and individuals** to receive transparent donations using the **Stellar blockchain**. Built for the [Stellar Ideathon 2026](https://dorahacks.io/hackathon/ideaton2026/detail), Colmena combines Web2 accessibility with Web3 transparency.
 
 ### 🎯 Mission
 
@@ -1152,8 +1152,8 @@ Make blockchain-based donations accessible to everyone, regardless of their cryp
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/veritas.git
-cd veritas
+git clone https://github.com/YOUR_USERNAME/colmena.git
+cd colmena
 ```
 
 ### 2. Install Dependencies
@@ -1231,7 +1231,7 @@ pnpm test:stellar
 ## 🏗️ Project Structure
 
 ```
-veritas/
+colmena/
 ├── src/
 │   ├── app/                    # Next.js App Router pages
 │   │   ├── api/               # API routes
@@ -1298,7 +1298,7 @@ veritas/
 
 ### ⚠️ No Smart Contracts (MVP)
 
-**VERITAS does NOT use smart contracts** in its current version. Donations work through **native Stellar transactions** (peer-to-peer).
+**Colmena does NOT use smart contracts** in its current version. Donations work through **native Stellar transactions** (peer-to-peer).
 
 ### Complete Donation Flow
 
@@ -1432,7 +1432,7 @@ async createDonation(input) {
 
 ### 🔐 Security
 
-- ✅ **Non-custodial** - VERITAS never has access to funds
+- ✅ **Non-custodial** - Colmena never has access to funds
 - ✅ **On-chain verification** - Each donation verified on Stellar
 - ✅ **Duplicate prevention** - Checks tx_hash doesn't exist
 - ✅ **Wallet validation** - Validates Stellar address format
@@ -1463,10 +1463,10 @@ Donor Wallet → Stellar Network → Project Wallet
                      ↓
               Transaction Hash
                      ↓
-            VERITAS Database (audit trail)
+            Colmena Database (audit trail)
 ```
 
-**VERITAS never holds funds** - all transactions are peer-to-peer.
+**Colmena never holds funds** - all transactions are peer-to-peer.
 
 ---
 
@@ -1481,8 +1481,8 @@ Click the **Fork** button at the top right of this page.
 ### 2. Clone Your Fork
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/veritas.git
-cd veritas
+git clone https://github.com/YOUR_USERNAME/colmena.git
+cd colmena
 ```
 
 ### 3. Create a Branch
@@ -1645,7 +1645,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 - **GitHub Issues** - For bugs and feature requests
 - **Discussions** - For questions and ideas
-- **Twitter** - [@veritas_stellar](#)
+- **Twitter** - [@colmena_stellar](#)
 
 ---
 
@@ -1653,6 +1653,6 @@ This project is open source and available under the [MIT License](LICENSE).
 
 **Built with ❤️ for the Stellar Ideathon 2026**
 
-[⭐ Star this repo](https://github.com/YOUR_USERNAME/veritas) • [🐛 Report Bug](https://github.com/YOUR_USERNAME/veritas/issues) • [💡 Request Feature](https://github.com/YOUR_USERNAME/veritas/issues)
+[⭐ Star this repo](https://github.com/DNO8/Colmena) • [🐛 Report Bug](https://github.com/DNO8/Colmena/issues) • [💡 Request Feature](https://github.com/DNO8/Colmena/issues)
 
 </div>
