@@ -41,6 +41,6 @@ yarn-error.log*
 next-env.d.ts
 agentfrontend.json
 /docs/
-/supabase-template
+/supabase-template/
 AGENTS.md
 PRODUCTION_FIX.md
